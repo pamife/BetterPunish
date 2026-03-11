@@ -2,6 +2,100 @@
 prefix: "&8[&6⚖ BetterPunish&8] &7"
 default-language: "en"
 
+# --- GUI ITEMS (PUNISHMENTS) ---
+# You can add as many items as you want.
+# Slots: 0-26 (Slot 4 is reserved for the player head. Slots with glass are overridden).
+# Type: BAN or MUTE
+# Durations: s (sec), m (min), h (hours), d (days), w (weeks). 3650d = 10 Years (Permanent)
+gui-items:
+  '10':
+    material: DIAMOND_SWORD
+    type: BAN
+    internal-reason: "Hacking"
+    name-en: "&cHacking"
+    name-de: "&cHacking"
+    durations:
+      - "30d"
+      - "3650d"
+    lores-en:
+      - "&71st Offense: 30 Days"
+      - "&72nd Offense: Permanent"
+    lores-de:
+      - "&71. Mal: 30 Tage"
+      - "&72. Mal: Permanent"
+  '11':
+    material: TNT
+    type: BAN
+    internal-reason: "Griefing"
+    name-en: "&4Griefing"
+    name-de: "&4Griefing"
+    durations:
+      - "7d"
+      - "30d"
+    lores-en:
+      - "&71st Offense: 7 Days"
+      - "&72nd Offense: 30 Days"
+    lores-de:
+      - "&71. Mal: 7 Tage"
+      - "&72. Mal: 30 Tage"
+  '12':
+    material: SPIDER_EYE
+    type: BAN
+    internal-reason: "Bug Abuse"
+    name-en: "&5Bug Abuse"
+    name-de: "&5Bugusing"
+    durations:
+      - "3d"
+      - "14d"
+    lores-en:
+      - "&71st Offense: 3 Days"
+      - "&72nd Offense: 14 Days"
+    lores-de:
+      - "&71. Mal: 3 Tage"
+      - "&72. Mal: 14 Tage"
+  '14':
+    material: PAPER
+    type: MUTE
+    internal-reason: "Insulting"
+    name-en: "&eInsulting"
+    name-de: "&eBeleidigung"
+    durations:
+      - "1d"
+      - "7d"
+    lores-en:
+      - "&71st Offense: 1 Day Mute"
+      - "&72nd Offense: 7 Day Mute"
+    lores-de:
+      - "&71. Mal: Mute 1 Tag"
+      - "&72. Mal: Mute 7 Tage"
+  '15':
+    material: FEATHER
+    type: MUTE
+    internal-reason: "Spamming"
+    name-en: "&eSpamming"
+    name-de: "&eSpam"
+    durations:
+      - "2h"
+      - "1d"
+    lores-en:
+      - "&71st Offense: 2 Hour Mute"
+      - "&72nd Offense: 1 Day Mute"
+    lores-de:
+      - "&71. Mal: Mute 2 Stunden"
+      - "&72. Mal: Mute 1 Tag"
+  '16':
+    material: NAME_TAG
+    type: MUTE
+    internal-reason: "Advertising"
+    name-en: "&eAdvertising"
+    name-de: "&eWerbung"
+    durations:
+      - "3650d"
+    lores-en:
+      - "&7Immediate: Permanent Mute"
+    lores-de:
+      - "&7Sofort: Permanent Mute"
+
 messages:
   no-permission:
     en: "&cYou do not have permission to do this!"

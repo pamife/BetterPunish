@@ -1,12 +1,15 @@
 package me.pamife.punishPlugin;
 
 import org.bukkit.ChatColor;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -44,9 +47,9 @@ public class DataManager {
         }
     }
 
-    // --- CONFIG SYSTEM (Liest aus config.yml) ---
+    // --- CONFIG SYSTEM ---
     public String getMessage(String path, String lang) {
-        String prefix = config.getString("prefix", "&8[&6BetterPunish&8] ");
+        String prefix = config.getString("prefix", "&8[&6⚖ BetterPunish&8] &7");
         String message = config.getString("messages." + path + "." + lang);
         if (message == null) {
             message = config.getString("messages." + path + ".en", "Missing string: " + path);
@@ -58,7 +61,33 @@ public class DataManager {
         return ChatColor.translateAlternateColorCodes('&', config.getString(path, ""));
     }
 
-    // --- SPRACH SYSTEM (Speichert in data.yml) ---
+    public ConfigurationSection getGuiItems() {
+        return config.getConfigurationSection("gui-items");
+    }
+
+    // --- TIME PARSER ---
+    public Instant parseDuration(String input) {
+        if (input == null || input.isEmpty()) return null;
+        char unit = input.charAt(input.length() - 1);
+        int amount;
+        try {
+            amount = Integer.parseInt(input.substring(0, input.length() - 1));
+        } catch (NumberFormatException e) {
+            return null;
+        }
+
+        Instant now = Instant.now();
+        switch (unit) {
+            case 's': return now.plus(amount, ChronoUnit.SECONDS);
+            case 'm': return now.plus(amount, ChronoUnit.MINUTES);
+            case 'h': return now.plus(amount, ChronoUnit.HOURS);
+            case 'd': return now.plus(amount, ChronoUnit.DAYS);
+            case 'w': return now.plus(amount * 7, ChronoUnit.DAYS);
+            default: return null;
+        }
+    }
+
+    // --- SPRACH SYSTEM ---
     public void setLanguage(UUID uuid, String lang) {
         dataConfig.set("Language." + uuid.toString(), lang);
         saveData();

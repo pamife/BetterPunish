@@ -2,9 +2,11 @@ package me.pamife.punishPlugin;
 
 import org.bukkit.Bukkit;
 import org.bukkit.BanList;
+import org.bukkit.ChatColor;
 import org.bukkit.Material;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.ban.ProfileBanList;
+import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.entity.Player;
 import org.bukkit.event.EventHandler;
 import org.bukkit.event.Listener;
@@ -15,14 +17,16 @@ import org.bukkit.inventory.meta.ItemMeta;
 import org.bukkit.inventory.meta.SkullMeta;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.Arrays; // <-- Das hat gefehlt!
 import java.util.Date;
+import java.util.List;
 
 public class PunishGUI implements Listener {
 
     public static void openGUI(Player moderator, OfflinePlayer target) {
-        boolean de = PunishPlugin.getInstance().getDataManager().getLanguage(moderator.getUniqueId()).equals("de");
+        DataManager data = PunishPlugin.getInstance().getDataManager();
+        boolean de = data.getLanguage(moderator.getUniqueId()).equals("de");
 
         String name = target.getName() != null ? target.getName() : (de ? "Unbekannt" : "Unknown");
         String title = (de ? "§cStrafe: " : "§cPunish: ") + name;
@@ -46,30 +50,29 @@ public class PunishGUI implements Listener {
         }
         inv.setItem(4, head);
 
-        // --- BANS ---
-        inv.setItem(10, createItem(Material.DIAMOND_SWORD, "§cHacking",
-                de ? "§71. Mal: 30 Tage" : "§71st Offense: 30 Days",
-                de ? "§72. Mal: Permanent" : "§72nd Offense: Permanent"));
+        // --- DYNAMISCHE ITEMS AUS CONFIG LADEN ---
+        ConfigurationSection items = data.getGuiItems();
+        if (items != null) {
+            for (String slotStr : items.getKeys(false)) {
+                try {
+                    int slot = Integer.parseInt(slotStr);
+                    String matStr = items.getString(slotStr + ".material", "STONE");
+                    Material mat = Material.matchMaterial(matStr);
+                    if (mat == null) mat = Material.STONE;
 
-        inv.setItem(11, createItem(Material.TNT, "§4Griefing",
-                de ? "§71. Mal: 7 Tage" : "§71st Offense: 7 Days",
-                de ? "§72. Mal: 30 Tage" : "§72nd Offense: 30 Days"));
+                    String itemName = de ? items.getString(slotStr + ".name-de") : items.getString(slotStr + ".name-en");
+                    itemName = ChatColor.translateAlternateColorCodes('&', itemName);
 
-        inv.setItem(12, createItem(Material.SPIDER_EYE, de ? "§5Bugusing" : "§5Bug Abuse",
-                de ? "§71. Mal: 3 Tage" : "§71st Offense: 3 Days",
-                de ? "§72. Mal: 14 Tage" : "§72nd Offense: 14 Days"));
+                    List<String> rawLore = de ? items.getStringList(slotStr + ".lores-de") : items.getStringList(slotStr + ".lores-en");
+                    List<String> coloredLore = new ArrayList<>();
+                    for (String l : rawLore) {
+                        coloredLore.add(ChatColor.translateAlternateColorCodes('&', l));
+                    }
 
-        // --- MUTES ---
-        inv.setItem(14, createItem(Material.PAPER, de ? "§eBeleidigung" : "§eInsulting",
-                de ? "§71. Mal: Mute 1 Tag" : "§71st Offense: 1 Day Mute",
-                de ? "§72. Mal: Mute 7 Tage" : "§72nd Offense: 7 Day Mute"));
-
-        inv.setItem(15, createItem(Material.FEATHER, "§eSpam",
-                de ? "§71. Mal: Mute 2 Stunden" : "§71st Offense: 2 Hour Mute",
-                de ? "§72. Mal: Mute 1 Tag" : "§72nd Offense: 1 Day Mute"));
-
-        inv.setItem(16, createItem(Material.NAME_TAG, de ? "§eWerbung" : "§eAdvertising",
-                de ? "§7Sofort: Permanent Mute" : "§7Immediate: Permanent Mute"));
+                    inv.setItem(slot, createItem(mat, itemName, coloredLore.toArray(new String[0])));
+                } catch (NumberFormatException ignored) {}
+            }
+        }
 
         moderator.openInventory(inv);
     }
@@ -94,13 +97,6 @@ public class PunishGUI implements Listener {
         event.setCancelled(true);
         if (event.getCurrentItem() == null) return;
 
-        Material clickedType = event.getCurrentItem().getType();
-
-        // Klick auf Deko-Elemente (Glas oder Kopf) ignorieren
-        if (clickedType == Material.BLACK_STAINED_GLASS_PANE || clickedType == Material.PLAYER_HEAD) {
-            return;
-        }
-
         Player moderator = (Player) event.getWhoClicked();
         DataManager data = PunishPlugin.getInstance().getDataManager();
         String lang = data.getLanguage(moderator.getUniqueId());
@@ -115,83 +111,65 @@ public class PunishGUI implements Listener {
             return;
         }
 
-        String reason = "";
-        Instant expiry = null;
-        boolean isMute = false;
+        int clickedSlot = event.getRawSlot();
+        ConfigurationSection items = data.getGuiItems();
+
+        // Prüfen ob der geklickte Slot in der Config existiert
+        if (items == null || !items.contains(String.valueOf(clickedSlot))) {
+            return; // Deko Items (Glas/Kopf) werden hier automatisch ignoriert
+        }
+
+        String slotKey = String.valueOf(clickedSlot);
+        String reason = items.getString(slotKey + ".internal-reason", "Unknown");
+        String type = items.getString(slotKey + ".type", "BAN");
+        List<String> durations = items.getStringList(slotKey + ".durations");
+
+        if (durations.isEmpty()) return;
+
+        int offenses = data.getOffenseCount(target.getUniqueId(), reason);
         String durationLog = "";
 
-        // --- BANS ---
-        if (clickedType == Material.DIAMOND_SWORD) {
-            reason = "Hacking";
-            int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = de ? "30 Tage" : "30 Days"; }
-            else { expiry = Instant.now().plus(3650, ChronoUnit.DAYS); durationLog = "Permanent"; }
-        }
-        else if (clickedType == Material.TNT) {
-            reason = "Griefing";
-            int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = de ? "7 Tage" : "7 Days"; }
-            else { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = de ? "30 Tage" : "30 Days"; }
-        }
-        else if (clickedType == Material.SPIDER_EYE) {
-            reason = de ? "Bugusing" : "Bug Abuse";
-            int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(3, ChronoUnit.DAYS); durationLog = de ? "3 Tage" : "3 Days"; }
-            else { expiry = Instant.now().plus(14, ChronoUnit.DAYS); durationLog = de ? "14 Tage" : "14 Days"; }
-        }
-        // --- MUTES ---
-        else if (clickedType == Material.PAPER) {
-            reason = de ? "Beleidigung" : "Insulting";
-            isMute = true;
-            int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = de ? "1 Tag" : "1 Day"; }
-            else { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = de ? "7 Tage" : "7 Days"; }
-        }
-        else if (clickedType == Material.FEATHER) {
-            reason = de ? "Spam" : "Spamming";
-            isMute = true;
-            int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(2, ChronoUnit.HOURS); durationLog = de ? "2 Stunden" : "2 Hours"; }
-            else { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = de ? "1 Tag" : "1 Day"; }
-        }
-        else if (clickedType == Material.NAME_TAG) {
-            reason = de ? "Werbung" : "Advertising";
-            isMute = true;
-            expiry = Instant.now().plus(3650, ChronoUnit.DAYS);
-            durationLog = "Permanent";
+        if (offenses >= durations.size()) {
+            durationLog = durations.get(durations.size() - 1); // Letzte Strafe aus der Liste nehmen
+        } else {
+            durationLog = durations.get(offenses);
         }
 
-        if (expiry != null) {
-            data.addOffense(target.getUniqueId(), reason);
+        Instant expiry = data.parseDuration(durationLog);
+        if (expiry == null) return;
 
-            if (isMute) {
-                data.setMute(target.getUniqueId(), expiry.toEpochMilli());
+        boolean isMute = type.equalsIgnoreCase("MUTE");
 
-                String successMsg = data.getMessage("mute-success-gui", lang).replace("%player%", target.getName()).replace("%reason%", reason);
-                moderator.sendMessage(successMsg);
+        // Strafe ausführen
+        data.addOffense(target.getUniqueId(), reason);
 
-                if (target.isOnline() && target.getPlayer() != null) {
-                    String notifyMsg = data.getMessage("muted-notify", lang).replace("%reason%", reason).replace("%time%", durationLog);
-                    target.getPlayer().sendMessage(notifyMsg);
-                }
-                data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
-            } else {
-                ProfileBanList banList = Bukkit.getBanList(BanList.Type.PROFILE);
-                banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), moderator.getName());
+        if (isMute) {
+            data.setMute(target.getUniqueId(), expiry.toEpochMilli());
 
-                if (target.isOnline() && target.getPlayer() != null) {
-                    String kickMsg = data.getMessage("banned-kick", lang).replace("%reason%", reason).replace("%time%", durationLog).replace("%prefix%", "");
-                    target.getPlayer().kickPlayer(kickMsg);
-                }
+            String successMsg = data.getMessage("mute-success-gui", lang).replace("%player%", target.getName()).replace("%reason%", reason);
+            moderator.sendMessage(successMsg);
 
-                String successMsg = data.getMessage("punish-success-gui", lang).replace("%player%", target.getName());
-                moderator.sendMessage(successMsg);
+            if (target.isOnline() && target.getPlayer() != null) {
+                String notifyMsg = data.getMessage("muted-notify", lang).replace("%reason%", reason).replace("%time%", durationLog);
+                target.getPlayer().sendMessage(notifyMsg);
+            }
+            data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
+        } else {
+            ProfileBanList banList = Bukkit.getBanList(BanList.Type.PROFILE);
+            banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), moderator.getName());
 
-                data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
+            if (target.isOnline() && target.getPlayer() != null) {
+                String kickMsg = data.getMessage("banned-kick", lang).replace("%reason%", reason).replace("%time%", durationLog).replace("%prefix%", "");
+                target.getPlayer().kickPlayer(kickMsg);
             }
 
-            PunishPlugin.getInstance().getPunishLogger().logBan(moderator.getName(), target.getName(), reason, durationLog);
-            moderator.closeInventory();
+            String successMsg = data.getMessage("punish-success-gui", lang).replace("%player%", target.getName());
+            moderator.sendMessage(successMsg);
+
+            data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
         }
+
+        PunishPlugin.getInstance().getPunishLogger().logBan(moderator.getName(), target.getName(), reason, durationLog);
+        moderator.closeInventory();
     }
 }

@@ -10,7 +10,6 @@ import org.bukkit.command.CommandSender;
 import org.bukkit.entity.Player;
 
 import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Date;
 
 public class PunishCommand implements CommandExecutor {
@@ -51,7 +50,7 @@ public class PunishCommand implements CommandExecutor {
         }
 
         String timeInput = args[1].toLowerCase();
-        Instant expiry = parseDuration(timeInput);
+        Instant expiry = dm.parseDuration(timeInput); // Geändert: Nutzt jetzt DataManager
 
         if (expiry == null) {
             sender.sendMessage(dm.getMessage("invalid-time", lang));
@@ -71,7 +70,7 @@ public class PunishCommand implements CommandExecutor {
             String kickMsg = dm.getMessage("banned-kick", lang)
                     .replace("%reason%", reason)
                     .replace("%time%", timeInput)
-                    .replace("%prefix%", ""); // Clean prefix for kick screen
+                    .replace("%prefix%", "");
             target.getPlayer().kickPlayer(kickMsg);
         }
 
@@ -85,26 +84,5 @@ public class PunishCommand implements CommandExecutor {
         sender.sendMessage(successMsg);
 
         return true;
-    }
-
-    private Instant parseDuration(String input) {
-        if (input == null || input.isEmpty()) return null;
-        char unit = input.charAt(input.length() - 1);
-        int amount;
-        try {
-            amount = Integer.parseInt(input.substring(0, input.length() - 1));
-        } catch (NumberFormatException e) {
-            return null;
-        }
-
-        Instant now = Instant.now();
-        switch (unit) {
-            case 's': return now.plus(amount, ChronoUnit.SECONDS);
-            case 'm': return now.plus(amount, ChronoUnit.MINUTES);
-            case 'h': return now.plus(amount, ChronoUnit.HOURS);
-            case 'd': return now.plus(amount, ChronoUnit.DAYS);
-            case 'w': return now.plus(amount * 7, ChronoUnit.DAYS);
-            default: return null;
-        }
     }
 }
