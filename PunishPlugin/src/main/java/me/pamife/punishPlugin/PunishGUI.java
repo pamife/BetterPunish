@@ -12,6 +12,7 @@ import org.bukkit.event.inventory.InventoryClickEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.meta.ItemMeta;
+import org.bukkit.inventory.meta.SkullMeta;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -28,7 +29,24 @@ public class PunishGUI implements Listener {
 
         Inventory inv = Bukkit.createInventory(null, 27, title);
 
-        // BANS
+        // --- DEKORATION: SCHWARZES GLAS ---
+        ItemStack glass = createItem(Material.BLACK_STAINED_GLASS_PANE, " ");
+        int[] glassSlots = {0, 1, 2, 3, 5, 6, 7, 8, 9, 13, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26};
+        for (int slot : glassSlots) {
+            inv.setItem(slot, glass);
+        }
+
+        // --- DEKORATION: SPIELERKOPF (Slot 4) ---
+        ItemStack head = new ItemStack(Material.PLAYER_HEAD);
+        SkullMeta headMeta = (SkullMeta) head.getItemMeta();
+        if (headMeta != null) {
+            headMeta.setOwningPlayer(target);
+            headMeta.setDisplayName(de ? "§6§lSpieler: §e" + name : "§6§lPlayer: §e" + name);
+            head.setItemMeta(headMeta);
+        }
+        inv.setItem(4, head);
+
+        // --- BANS ---
         inv.setItem(10, createItem(Material.DIAMOND_SWORD, "§cHacking",
                 de ? "§71. Mal: 30 Tage" : "§71st Offense: 30 Days",
                 de ? "§72. Mal: Permanent" : "§72nd Offense: Permanent"));
@@ -41,7 +59,7 @@ public class PunishGUI implements Listener {
                 de ? "§71. Mal: 3 Tage" : "§71st Offense: 3 Days",
                 de ? "§72. Mal: 14 Tage" : "§72nd Offense: 14 Days"));
 
-        // MUTES
+        // --- MUTES ---
         inv.setItem(14, createItem(Material.PAPER, de ? "§eBeleidigung" : "§eInsulting",
                 de ? "§71. Mal: Mute 1 Tag" : "§71st Offense: 1 Day Mute",
                 de ? "§72. Mal: Mute 7 Tage" : "§72nd Offense: 7 Day Mute"));
@@ -61,7 +79,9 @@ public class PunishGUI implements Listener {
         ItemMeta meta = item.getItemMeta();
         if (meta != null) {
             meta.setDisplayName(name);
-            meta.setLore(Arrays.asList(lore));
+            if (lore.length > 0) {
+                meta.setLore(Arrays.asList(lore));
+            }
             item.setItemMeta(meta);
         }
         return item;
@@ -73,6 +93,13 @@ public class PunishGUI implements Listener {
         if (!title.startsWith("§cPunish: ") && !title.startsWith("§cStrafe: ")) return;
         event.setCancelled(true);
         if (event.getCurrentItem() == null) return;
+
+        Material clickedType = event.getCurrentItem().getType();
+
+        // Klick auf Deko-Elemente (Glas oder Kopf) ignorieren
+        if (clickedType == Material.BLACK_STAINED_GLASS_PANE || clickedType == Material.PLAYER_HEAD) {
+            return;
+        }
 
         Player moderator = (Player) event.getWhoClicked();
         DataManager data = PunishPlugin.getInstance().getDataManager();
@@ -88,7 +115,6 @@ public class PunishGUI implements Listener {
             return;
         }
 
-        Material clickedType = event.getCurrentItem().getType();
         String reason = "";
         Instant expiry = null;
         boolean isMute = false;
