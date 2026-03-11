@@ -13,42 +13,39 @@ public class UnpunishCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        boolean de = false;
-        if (sender instanceof Player) {
-            de = PunishPlugin.getInstance().getDataManager().getLanguage(((Player) sender).getUniqueId()).equals("de");
-        }
+        DataManager dm = PunishPlugin.getInstance().getDataManager();
+        String lang = (sender instanceof Player) ? dm.getLanguage(((Player) sender).getUniqueId()) : dm.getConfigString("default-language");
 
         if (!sender.hasPermission("punish.unpunish")) {
-            sender.sendMessage(de ? "§cDu hast keine Rechte dafür!" : "§cYou do not have permission to do this!");
+            sender.sendMessage(dm.getMessage("no-permission", lang));
             return true;
         }
 
         if (args.length == 0) {
-            sender.sendMessage(de ? "§cVerwendung: /unpunish <Spieler>" : "§cUsage: /unpunish <Player>");
+            sender.sendMessage(dm.getMessage("usage-unpunish", lang));
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
-        DataManager data = PunishPlugin.getInstance().getDataManager();
         boolean changed = false;
 
         ProfileBanList banList = Bukkit.getBanList(BanList.Type.PROFILE);
         if (banList.isBanned(target.getPlayerProfile())) {
             banList.pardon(target.getPlayerProfile());
-            sender.sendMessage(de ? "§aDer Ban von " + target.getName() + " wurde aufgehoben." : "§aThe ban for " + target.getName() + " has been lifted.");
-            data.addHistory(target.getUniqueId(), (de ? "§aEntbannt §7von " : "§aUnbanned §7by ") + sender.getName());
+            sender.sendMessage(dm.getMessage("unpunish-ban", lang).replace("%player%", target.getName()));
+            dm.addHistory(target.getUniqueId(), "§aUnbanned §7by " + sender.getName());
             changed = true;
         }
 
-        if (data.isMuted(target.getUniqueId())) {
-            data.removeMute(target.getUniqueId());
-            sender.sendMessage(de ? "§aDer Mute von " + target.getName() + " wurde aufgehoben." : "§aThe mute for " + target.getName() + " has been lifted.");
-            data.addHistory(target.getUniqueId(), (de ? "§aEntmutet §7von " : "§aUnmuted §7by ") + sender.getName());
+        if (dm.isMuted(target.getUniqueId())) {
+            dm.removeMute(target.getUniqueId());
+            sender.sendMessage(dm.getMessage("unpunish-mute", lang).replace("%player%", target.getName()));
+            dm.addHistory(target.getUniqueId(), "§aUnmuted §7by " + sender.getName());
             changed = true;
         }
 
         if (!changed) {
-            sender.sendMessage(de ? "§cDieser Spieler hat aktuell keine aktive Strafe." : "§cThis player currently has no active punishments.");
+            sender.sendMessage(dm.getMessage("unpunish-none", lang));
         }
 
         return true;

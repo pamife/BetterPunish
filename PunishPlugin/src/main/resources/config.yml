@@ -1,0 +1,71 @@
+# BetterPunish Configuration
+prefix: "&8[&6BetterPunish&8] "
+default-language: "en"
+
+messages:
+  no-permission:
+    en: "&cYou do not have permission to do this!"
+    de: "&cDu hast keine Rechte dafür!"
+  player-not-found:
+    en: "&cPlayer not found."
+    de: "&cSpieler nicht gefunden."
+  gui-only:
+    en: "&cThe GUI can only be opened by players."
+    de: "&cDie GUI kann nur von Spielern geöffnet werden."
+  usage-punish:
+    en: "&cUsage: /punish <Player> [Time (e.g., 5d)] [Reason]"
+    de: "&cVerwendung: /punish <Spieler> [Zeit (z.B. 5d)] [Grund]"
+  missing-reason:
+    en: "&cPlease provide a reason. Example: /punish Player 5d Hacking"
+    de: "&cBitte gib einen Grund an. Beispiel: /punish Spieler 5d Hacking"
+  invalid-time:
+    en: "&cInvalid time format! Use s, m, h, d, w. Ex: 5d"
+    de: "&cUngültiges Zeitformat! Nutze s, m, h, d, w. Bsp: 5d"
+  punish-success:
+    en: "&aYou have successfully punished %player% for %time%. (Reason: %reason%)"
+    de: "&aDu hast %player% erfolgreich für %time% bestraft. (Grund: %reason%)"
+  punish-success-gui:
+    en: "&aYou have successfully banned %player%."
+    de: "&aDu hast %player% erfolgreich gebannt."
+  mute-success-gui:
+    en: "&aYou have muted %player% for %reason%."
+    de: "&aDu hast %player% für %reason% gemutet."
+  banned-kick:
+    en: "&cYou have been banned!\n&7Reason: %reason%\n&7Duration: %time%"
+    de: "&cDu wurdest gebannt!\n&7Grund: %reason%\n&7Dauer: %time%"
+  muted-notify:
+    en: "&cYou have been muted!\n&7Reason: %reason%\n&7Duration: %time%"
+    de: "&cDu wurdest gemutet!\n&7Grund: %reason%\n&7Dauer: %time%"
+  mute-message:
+    en: "&cYou are currently muted and cannot use the chat!"
+    de: "&cDu bist momentan aus dem Chat ausgeschlossen (Gemutet)!"
+  usage-unpunish:
+    en: "&cUsage: /unpunish <Player>"
+    de: "&cVerwendung: /unpunish <Spieler>"
+  unpunish-ban:
+    en: "&aThe ban for %player% has been lifted."
+    de: "&aDer Ban von %player% wurde aufgehoben."
+  unpunish-mute:
+    en: "&aThe mute for %player% has been lifted."
+    de: "&aDer Mute von %player% wurde aufgehoben."
+  unpunish-none:
+    en: "&cThis player currently has no active punishments."
+    de: "&cDieser Spieler hat aktuell keine aktive Strafe."
+  usage-history:
+    en: "&cUsage: /history <Player>"
+    de: "&cVerwendung: /history <Spieler>"
+  history-clean:
+    en: "&aThis player has a clean record!"
+    de: "&aDieser Spieler hat eine saubere Weste!"
+  history-header:
+    en: "&ePunishment History of &6%player%"
+    de: "&eStrafhistorie von &6%player%"
+  usage-lang:
+    en: "&cUsage: /punishlang <en|de>"
+    de: "&cVerwendung: /punishlang <en|de>"
+  lang-success:
+    en: "&aLanguage successfully set to English!"
+    de: "&aSprache erfolgreich auf Deutsch gesetzt!"
+  lang-invalid:
+    en: "&cAvailable languages: en, de"
+    de: "&cVerfügbare Sprachen: en, de"

@@ -1,5 +1,6 @@
 package me.pamife.punishPlugin;
 
+import org.bukkit.ChatColor;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
 
@@ -13,59 +14,74 @@ import java.util.UUID;
 public class DataManager {
 
     private final PunishPlugin plugin;
-    private File file;
+    private File dataFile;
+    private FileConfiguration dataConfig;
     private FileConfiguration config;
 
     public DataManager(PunishPlugin plugin) {
         this.plugin = plugin;
-        setup();
+        this.config = plugin.getConfig();
+        setupData();
     }
 
-    private void setup() {
-        file = new File(plugin.getDataFolder(), "data.yml");
-        if (!file.exists()) {
+    private void setupData() {
+        dataFile = new File(plugin.getDataFolder(), "data.yml");
+        if (!dataFile.exists()) {
             try {
-                file.createNewFile();
+                dataFile.createNewFile();
             } catch (IOException e) {
                 e.printStackTrace();
             }
         }
-        config = YamlConfiguration.loadConfiguration(file);
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
     }
 
-    private void save() {
+    public void saveData() {
         try {
-            config.save(file);
+            dataConfig.save(dataFile);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    // --- SPRACH SYSTEM (NEU) ---
+    // --- CONFIG SYSTEM (Liest aus config.yml) ---
+    public String getMessage(String path, String lang) {
+        String prefix = config.getString("prefix", "&8[&6BetterPunish&8] ");
+        String message = config.getString("messages." + path + "." + lang);
+        if (message == null) {
+            message = config.getString("messages." + path + ".en", "Missing string: " + path);
+        }
+        return ChatColor.translateAlternateColorCodes('&', prefix + message);
+    }
+
+    public String getConfigString(String path) {
+        return ChatColor.translateAlternateColorCodes('&', config.getString(path, ""));
+    }
+
+    // --- SPRACH SYSTEM (Speichert in data.yml) ---
     public void setLanguage(UUID uuid, String lang) {
-        config.set("Language." + uuid.toString(), lang);
-        save();
+        dataConfig.set("Language." + uuid.toString(), lang);
+        saveData();
     }
 
     public String getLanguage(UUID uuid) {
-        // Standardmäßig Englisch ("en"), wenn noch nichts gesetzt wurde
-        return config.getString("Language." + uuid.toString(), "en");
+        return dataConfig.getString("Language." + uuid.toString(), config.getString("default-language", "en"));
     }
 
     // --- MUTE SYSTEM ---
     public void setMute(UUID uuid, long expiryMillis) {
-        config.set("Mutes." + uuid.toString(), expiryMillis);
-        save();
+        dataConfig.set("Mutes." + uuid.toString(), expiryMillis);
+        saveData();
     }
 
     public void removeMute(UUID uuid) {
-        config.set("Mutes." + uuid.toString(), null);
-        save();
+        dataConfig.set("Mutes." + uuid.toString(), null);
+        saveData();
     }
 
     public boolean isMuted(UUID uuid) {
-        if (!config.contains("Mutes." + uuid.toString())) return false;
-        long expiry = config.getLong("Mutes." + uuid.toString());
+        if (!dataConfig.contains("Mutes." + uuid.toString())) return false;
+        long expiry = dataConfig.getLong("Mutes." + uuid.toString());
         if (System.currentTimeMillis() > expiry) {
             removeMute(uuid);
             return false;
@@ -73,27 +89,25 @@ public class DataManager {
         return true;
     }
 
-    // --- VERGEHEN (OFFENSES) ---
+    // --- VERGEHEN & HISTORY ---
     public int getOffenseCount(UUID uuid, String reason) {
-        return config.getInt("Offenses." + uuid.toString() + "." + reason, 0);
+        return dataConfig.getInt("Offenses." + uuid.toString() + "." + reason, 0);
     }
 
     public void addOffense(UUID uuid, String reason) {
-        int current = getOffenseCount(uuid, reason);
-        config.set("Offenses." + uuid.toString() + "." + reason, current + 1);
-        save();
+        dataConfig.set("Offenses." + uuid.toString() + "." + reason, getOffenseCount(uuid, reason) + 1);
+        saveData();
     }
 
-    // --- HISTORIE ---
     public void addHistory(UUID uuid, String logEntry) {
-        List<String> history = config.getStringList("History." + uuid.toString());
+        List<String> history = dataConfig.getStringList("History." + uuid.toString());
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
         history.add("§8[" + date + "] §r" + logEntry);
-        config.set("History." + uuid.toString(), history);
-        save();
+        dataConfig.set("History." + uuid.toString(), history);
+        saveData();
     }
 
     public List<String> getHistory(UUID uuid) {
-        return config.getStringList("History." + uuid.toString());
+        return dataConfig.getStringList("History." + uuid.toString());
     }
 }

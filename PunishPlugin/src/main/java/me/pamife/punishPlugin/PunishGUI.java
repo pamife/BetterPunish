@@ -76,13 +76,14 @@ public class PunishGUI implements Listener {
 
         Player moderator = (Player) event.getWhoClicked();
         DataManager data = PunishPlugin.getInstance().getDataManager();
-        boolean de = data.getLanguage(moderator.getUniqueId()).equals("de");
+        String lang = data.getLanguage(moderator.getUniqueId());
+        boolean de = lang.equals("de");
 
         String targetName = title.replace("§cPunish: ", "").replace("§cStrafe: ", "");
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
 
         if (!target.hasPlayedBefore() && !target.isOnline()) {
-            moderator.sendMessage(de ? "§cSpieler nicht gefunden." : "§cPlayer not found.");
+            moderator.sendMessage(data.getMessage("player-not-found", lang));
             moderator.closeInventory();
             return;
         }
@@ -139,10 +140,13 @@ public class PunishGUI implements Listener {
 
             if (isMute) {
                 data.setMute(target.getUniqueId(), expiry.toEpochMilli());
-                moderator.sendMessage(de ? "§aDu hast " + target.getName() + " für " + reason + " gemutet."
-                        : "§aYou have muted " + target.getName() + " for " + reason + ".");
+
+                String successMsg = data.getMessage("mute-success-gui", lang).replace("%player%", target.getName()).replace("%reason%", reason);
+                moderator.sendMessage(successMsg);
+
                 if (target.isOnline() && target.getPlayer() != null) {
-                    target.getPlayer().sendMessage((de ? "§cDu wurdest gemutet!\n§7Grund: " : "§cYou have been muted!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + durationLog);
+                    String notifyMsg = data.getMessage("muted-notify", lang).replace("%reason%", reason).replace("%time%", durationLog);
+                    target.getPlayer().sendMessage(notifyMsg);
                 }
                 data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
             } else {
@@ -150,10 +154,13 @@ public class PunishGUI implements Listener {
                 banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), moderator.getName());
 
                 if (target.isOnline() && target.getPlayer() != null) {
-                    target.getPlayer().kickPlayer((de ? "§cDu wurdest gebannt!\n§7Grund: " : "§cYou have been banned!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + durationLog);
+                    String kickMsg = data.getMessage("banned-kick", lang).replace("%reason%", reason).replace("%time%", durationLog).replace("%prefix%", "");
+                    target.getPlayer().kickPlayer(kickMsg);
                 }
-                moderator.sendMessage(de ? "§aDu hast " + target.getName() + " erfolgreich gebannt."
-                        : "§aYou have successfully banned " + target.getName() + ".");
+
+                String successMsg = data.getMessage("punish-success-gui", lang).replace("%player%", target.getName());
+                moderator.sendMessage(successMsg);
+
                 data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
             }
 

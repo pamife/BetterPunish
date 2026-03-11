@@ -10,13 +10,12 @@ public class ChatListener implements Listener {
     @EventHandler
     public void onChat(AsyncPlayerChatEvent event) {
         Player player = event.getPlayer();
-        DataManager dataManager = PunishPlugin.getInstance().getDataManager();
+        DataManager dm = PunishPlugin.getInstance().getDataManager();
 
-        if (dataManager.isMuted(player.getUniqueId())) {
+        if (dm.isMuted(player.getUniqueId())) {
             event.setCancelled(true);
-            boolean de = dataManager.getLanguage(player.getUniqueId()).equals("de");
-            player.sendMessage(de ? "§cDu bist momentan aus dem Chat ausgeschlossen (Gemutet)!"
-                    : "§cYou are currently muted and cannot use the chat!");
+            String lang = dm.getLanguage(player.getUniqueId());
+            player.sendMessage(dm.getMessage("mute-message", lang));
         }
     }
 }

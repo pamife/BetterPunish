@@ -17,32 +17,28 @@ public class PunishCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
-        boolean de = false;
-        if (sender instanceof Player) {
-            de = PunishPlugin.getInstance().getDataManager().getLanguage(((Player) sender).getUniqueId()).equals("de");
-        }
+        DataManager dm = PunishPlugin.getInstance().getDataManager();
+        String lang = (sender instanceof Player) ? dm.getLanguage(((Player) sender).getUniqueId()) : dm.getConfigString("default-language");
 
         if (!sender.hasPermission("punish.use")) {
-            sender.sendMessage(de ? "§cDu hast keine Rechte dafür!" : "§cYou do not have permission to do this!");
+            sender.sendMessage(dm.getMessage("no-permission", lang));
             return true;
         }
 
         if (args.length == 0) {
-            sender.sendMessage(de ? "§cVerwendung:" : "§cUsage:");
-            sender.sendMessage(de ? "§cGUI: /punish <Spieler>" : "§cGUI: /punish <Player>");
-            sender.sendMessage(de ? "§cCustom: /punish <Spieler> <Zeit(z.B. 5d, 12h)> <Grund>" : "§cCustom: /punish <Player> <Time (e.g., 5d, 12h)> <Reason>");
+            sender.sendMessage(dm.getMessage("usage-punish", lang));
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         if (!target.hasPlayedBefore() && !target.isOnline()) {
-            sender.sendMessage(de ? "§cDieser Spieler war noch nie auf dem Server." : "§cThis player has never been on the server.");
+            sender.sendMessage(dm.getMessage("player-not-found", lang));
             return true;
         }
 
         if (args.length == 1) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage(de ? "Die GUI kann nur von Spielern geöffnet werden." : "The GUI can only be opened by players.");
+                sender.sendMessage(dm.getMessage("gui-only", lang));
                 return true;
             }
             PunishGUI.openGUI((Player) sender, target);
@@ -50,7 +46,7 @@ public class PunishCommand implements CommandExecutor {
         }
 
         if (args.length < 3) {
-            sender.sendMessage(de ? "§cBitte gib einen Grund an. Beispiel: /punish Spieler 5d Hacking" : "§cPlease provide a reason. Example: /punish Player 5d Hacking");
+            sender.sendMessage(dm.getMessage("missing-reason", lang));
             return true;
         }
 
@@ -58,7 +54,7 @@ public class PunishCommand implements CommandExecutor {
         Instant expiry = parseDuration(timeInput);
 
         if (expiry == null) {
-            sender.sendMessage(de ? "§cUngültiges Zeitformat! Nutze s(Sek), m(Min), h(Std), d(Tage), w(Wochen)." : "§cInvalid time format! Use s(sec), m(min), h(hours), d(days), w(weeks).");
+            sender.sendMessage(dm.getMessage("invalid-time", lang));
             return true;
         }
 
@@ -72,14 +68,22 @@ public class PunishCommand implements CommandExecutor {
         banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), sender.getName());
 
         if (target.isOnline() && target.getPlayer() != null) {
-            target.getPlayer().kickPlayer((de ? "§cDu wurdest gebannt!\n§7Grund: " : "§cYou have been banned!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + timeInput);
+            String kickMsg = dm.getMessage("banned-kick", lang)
+                    .replace("%reason%", reason)
+                    .replace("%time%", timeInput)
+                    .replace("%prefix%", ""); // Clean prefix for kick screen
+            target.getPlayer().kickPlayer(kickMsg);
         }
 
         PunishPlugin.getInstance().getPunishLogger().logBan(sender.getName(), target.getName(), reason, timeInput);
-        PunishPlugin.getInstance().getDataManager().addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + timeInput + ") " + (de ? "von " : "by ") + sender.getName());
+        dm.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + timeInput + ") by " + sender.getName());
 
-        sender.sendMessage(de ? "§aDu hast " + target.getName() + " erfolgreich für " + timeInput + " bestraft. (Grund: " + reason + ")"
-                : "§aYou have successfully punished " + target.getName() + " for " + timeInput + ". (Reason: " + reason + ")");
+        String successMsg = dm.getMessage("punish-success", lang)
+                .replace("%player%", target.getName())
+                .replace("%time%", timeInput)
+                .replace("%reason%", reason);
+        sender.sendMessage(successMsg);
+
         return true;
     }
 
@@ -92,6 +96,7 @@ public class PunishCommand implements CommandExecutor {
         } catch (NumberFormatException e) {
             return null;
         }
+
         Instant now = Instant.now();
         switch (unit) {
             case 's': return now.plus(amount, ChronoUnit.SECONDS);

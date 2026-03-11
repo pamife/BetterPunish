@@ -15,28 +15,26 @@ public class LanguageCommand implements CommandExecutor {
         }
 
         Player player = (Player) sender;
+        DataManager dm = PunishPlugin.getInstance().getDataManager();
+        String currentLang = dm.getLanguage(player.getUniqueId());
 
         if (!player.hasPermission("punish.use")) {
-            player.sendMessage("§cYou do not have permission to do this!");
+            player.sendMessage(dm.getMessage("no-permission", currentLang));
             return true;
         }
 
         if (args.length == 0) {
-            player.sendMessage("§cUsage: /punishlang <en|de>");
+            player.sendMessage(dm.getMessage("usage-lang", currentLang));
             return true;
         }
 
         String lang = args[0].toLowerCase();
 
         if (lang.equals("de") || lang.equals("en")) {
-            PunishPlugin.getInstance().getDataManager().setLanguage(player.getUniqueId(), lang);
-            if (lang.equals("de")) {
-                player.sendMessage("§aSprache erfolgreich auf Deutsch gesetzt!");
-            } else {
-                player.sendMessage("§aLanguage successfully set to English!");
-            }
+            dm.setLanguage(player.getUniqueId(), lang);
+            player.sendMessage(dm.getMessage("lang-success", lang));
         } else {
-            player.sendMessage("§cAvailable languages: en, de");
+            player.sendMessage(dm.getMessage("lang-invalid", currentLang));
         }
 
         return true;
