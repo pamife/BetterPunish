@@ -118,6 +118,21 @@ public class DataManager {
         return true;
     }
 
+    // --- WARN SYSTEM (NEU) ---
+    public int getWarnCount(UUID uuid) {
+        return dataConfig.getInt("Warns." + uuid.toString(), 0);
+    }
+
+    public void addWarn(UUID uuid) {
+        dataConfig.set("Warns." + uuid.toString(), getWarnCount(uuid) + 1);
+        saveData();
+    }
+
+    public void resetWarns(UUID uuid) {
+        dataConfig.set("Warns." + uuid.toString(), 0);
+        saveData();
+    }
+
     // --- VERGEHEN & HISTORY ---
     public int getOffenseCount(UUID uuid, String reason) {
         return dataConfig.getInt("Offenses." + uuid.toString() + "." + reason, 0);

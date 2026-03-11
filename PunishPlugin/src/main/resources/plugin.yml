@@ -15,3 +15,6 @@ commands:
   punishlang:
     description: Changes your personal plugin language (en/de)
     permission: punish.use
+  warn:
+    description: Warns a player. Auto-mutes on 3 warnings.
+    permission: punish.use

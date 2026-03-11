@@ -16,7 +16,6 @@ public class PunishPlugin extends JavaPlugin {
             getDataFolder().mkdirs();
         }
 
-        // Lade config.yml (Nachrichten) und data.yml (Spielerdaten)
         saveDefaultConfig();
         dataManager = new DataManager(this);
         punishLogger = new PunishLogger(this);
@@ -28,6 +27,7 @@ public class PunishPlugin extends JavaPlugin {
         getCommand("history").setExecutor(new HistoryCommand());
         getCommand("unpunish").setExecutor(new UnpunishCommand());
         getCommand("punishlang").setExecutor(new LanguageCommand());
+        getCommand("warn").setExecutor(new WarnCommand()); // NEU
 
         getLogger().info("BetterPunish plugin has been enabled!");
     }
