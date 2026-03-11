@@ -1,0 +1,8 @@
+name: PunishPlugin
+version: '1.0-SNAPSHOT'
+main: me.pamife.punishPlugin.PunishPlugin
+api-version: '1.21'
+commands:
+  punish:
+    description: Öffnet das Bestrafungs-Menü
+    permission: punish.use
