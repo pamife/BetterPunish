@@ -4,5 +4,11 @@ main: me.pamife.punishPlugin.PunishPlugin
 api-version: '1.21'
 commands:
   punish:
-    description: Öffnet das Bestrafungs-Menü
+    description: Opens the punishment menu or punishes manually
     permission: punish.use
+  history:
+    description: Shows the punishment history of a player
+    permission: punish.history
+  unpunish:
+    description: Lifts an active punishment
+    permission: punish.unpunish
