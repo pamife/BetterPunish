@@ -4,11 +4,14 @@ main: me.pamife.punishPlugin.PunishPlugin
 api-version: '1.21'
 commands:
   punish:
-    description: Öffnet das Bestrafungs-Menü oder bestraft manuell
+    description: Opens the punishment menu or punishes manually
     permission: punish.use
   history:
-    description: Zeigt die Strafhistorie eines Spielers
+    description: Shows the punishment history of a player
     permission: punish.history
   unpunish:
-    description: Hebt eine aktive Strafe auf
+    description: Lifts an active punishment
     permission: punish.unpunish
+  punishlang:
+    description: Changes your personal plugin language (en/de)
+    permission: punish.use
