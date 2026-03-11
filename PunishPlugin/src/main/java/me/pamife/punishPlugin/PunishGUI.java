@@ -21,18 +21,37 @@ import java.util.Date;
 public class PunishGUI implements Listener {
 
     public static void openGUI(Player moderator, OfflinePlayer target) {
-        String name = target.getName() != null ? target.getName() : "Unknown";
-        Inventory inv = Bukkit.createInventory(null, 27, "§cPunish: " + name);
+        boolean de = PunishPlugin.getInstance().getDataManager().getLanguage(moderator.getUniqueId()).equals("de");
+
+        String name = target.getName() != null ? target.getName() : (de ? "Unbekannt" : "Unknown");
+        String title = (de ? "§cStrafe: " : "§cPunish: ") + name;
+
+        Inventory inv = Bukkit.createInventory(null, 27, title);
 
         // BANS
-        inv.setItem(10, createItem(Material.DIAMOND_SWORD, "§cHacking", "§71st Offense: 30 Days", "§72nd Offense: Permanent"));
-        inv.setItem(11, createItem(Material.TNT, "§4Griefing", "§71st Offense: 7 Days", "§72nd Offense: 30 Days"));
-        inv.setItem(12, createItem(Material.SPIDER_EYE, "§5Bug Abuse", "§71st Offense: 3 Days", "§72nd Offense: 14 Days"));
+        inv.setItem(10, createItem(Material.DIAMOND_SWORD, "§cHacking",
+                de ? "§71. Mal: 30 Tage" : "§71st Offense: 30 Days",
+                de ? "§72. Mal: Permanent" : "§72nd Offense: Permanent"));
+
+        inv.setItem(11, createItem(Material.TNT, "§4Griefing",
+                de ? "§71. Mal: 7 Tage" : "§71st Offense: 7 Days",
+                de ? "§72. Mal: 30 Tage" : "§72nd Offense: 30 Days"));
+
+        inv.setItem(12, createItem(Material.SPIDER_EYE, de ? "§5Bugusing" : "§5Bug Abuse",
+                de ? "§71. Mal: 3 Tage" : "§71st Offense: 3 Days",
+                de ? "§72. Mal: 14 Tage" : "§72nd Offense: 14 Days"));
 
         // MUTES
-        inv.setItem(14, createItem(Material.PAPER, "§eInsulting", "§71st Offense: 1 Day Mute", "§72nd Offense: 7 Day Mute"));
-        inv.setItem(15, createItem(Material.FEATHER, "§eSpamming", "§71st Offense: 2 Hour Mute", "§72nd Offense: 1 Day Mute"));
-        inv.setItem(16, createItem(Material.NAME_TAG, "§eAdvertising", "§7Immediate: Permanent Mute"));
+        inv.setItem(14, createItem(Material.PAPER, de ? "§eBeleidigung" : "§eInsulting",
+                de ? "§71. Mal: Mute 1 Tag" : "§71st Offense: 1 Day Mute",
+                de ? "§72. Mal: Mute 7 Tage" : "§72nd Offense: 7 Day Mute"));
+
+        inv.setItem(15, createItem(Material.FEATHER, "§eSpam",
+                de ? "§71. Mal: Mute 2 Stunden" : "§71st Offense: 2 Hour Mute",
+                de ? "§72. Mal: Mute 1 Tag" : "§72nd Offense: 1 Day Mute"));
+
+        inv.setItem(16, createItem(Material.NAME_TAG, de ? "§eWerbung" : "§eAdvertising",
+                de ? "§7Sofort: Permanent Mute" : "§7Immediate: Permanent Mute"));
 
         moderator.openInventory(inv);
     }
@@ -51,23 +70,24 @@ public class PunishGUI implements Listener {
     @EventHandler
     public void onClick(InventoryClickEvent event) {
         String title = event.getView().getTitle();
-        if (!title.startsWith("§cPunish: ")) return;
+        if (!title.startsWith("§cPunish: ") && !title.startsWith("§cStrafe: ")) return;
         event.setCancelled(true);
         if (event.getCurrentItem() == null) return;
 
         Player moderator = (Player) event.getWhoClicked();
-        String targetName = title.replace("§cPunish: ", "");
+        DataManager data = PunishPlugin.getInstance().getDataManager();
+        boolean de = data.getLanguage(moderator.getUniqueId()).equals("de");
+
+        String targetName = title.replace("§cPunish: ", "").replace("§cStrafe: ", "");
         OfflinePlayer target = Bukkit.getOfflinePlayer(targetName);
 
         if (!target.hasPlayedBefore() && !target.isOnline()) {
-            moderator.sendMessage("§cPlayer not found.");
+            moderator.sendMessage(de ? "§cSpieler nicht gefunden." : "§cPlayer not found.");
             moderator.closeInventory();
             return;
         }
 
         Material clickedType = event.getCurrentItem().getType();
-        DataManager data = PunishPlugin.getInstance().getDataManager();
-
         String reason = "";
         Instant expiry = null;
         boolean isMute = false;
@@ -77,38 +97,38 @@ public class PunishGUI implements Listener {
         if (clickedType == Material.DIAMOND_SWORD) {
             reason = "Hacking";
             int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = "30 Days"; }
+            if (offenses == 0) { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = de ? "30 Tage" : "30 Days"; }
             else { expiry = Instant.now().plus(3650, ChronoUnit.DAYS); durationLog = "Permanent"; }
         }
         else if (clickedType == Material.TNT) {
             reason = "Griefing";
             int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = "7 Days"; }
-            else { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = "30 Days"; }
+            if (offenses == 0) { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = de ? "7 Tage" : "7 Days"; }
+            else { expiry = Instant.now().plus(30, ChronoUnit.DAYS); durationLog = de ? "30 Tage" : "30 Days"; }
         }
         else if (clickedType == Material.SPIDER_EYE) {
-            reason = "Bug Abuse";
+            reason = de ? "Bugusing" : "Bug Abuse";
             int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(3, ChronoUnit.DAYS); durationLog = "3 Days"; }
-            else { expiry = Instant.now().plus(14, ChronoUnit.DAYS); durationLog = "14 Days"; }
+            if (offenses == 0) { expiry = Instant.now().plus(3, ChronoUnit.DAYS); durationLog = de ? "3 Tage" : "3 Days"; }
+            else { expiry = Instant.now().plus(14, ChronoUnit.DAYS); durationLog = de ? "14 Tage" : "14 Days"; }
         }
         // --- MUTES ---
         else if (clickedType == Material.PAPER) {
-            reason = "Insulting";
+            reason = de ? "Beleidigung" : "Insulting";
             isMute = true;
             int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = "1 Day"; }
-            else { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = "7 Days"; }
+            if (offenses == 0) { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = de ? "1 Tag" : "1 Day"; }
+            else { expiry = Instant.now().plus(7, ChronoUnit.DAYS); durationLog = de ? "7 Tage" : "7 Days"; }
         }
         else if (clickedType == Material.FEATHER) {
-            reason = "Spamming";
+            reason = de ? "Spam" : "Spamming";
             isMute = true;
             int offenses = data.getOffenseCount(target.getUniqueId(), reason);
-            if (offenses == 0) { expiry = Instant.now().plus(2, ChronoUnit.HOURS); durationLog = "2 Hours"; }
-            else { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = "1 Day"; }
+            if (offenses == 0) { expiry = Instant.now().plus(2, ChronoUnit.HOURS); durationLog = de ? "2 Stunden" : "2 Hours"; }
+            else { expiry = Instant.now().plus(1, ChronoUnit.DAYS); durationLog = de ? "1 Tag" : "1 Day"; }
         }
         else if (clickedType == Material.NAME_TAG) {
-            reason = "Advertising";
+            reason = de ? "Werbung" : "Advertising";
             isMute = true;
             expiry = Instant.now().plus(3650, ChronoUnit.DAYS);
             durationLog = "Permanent";
@@ -119,20 +139,22 @@ public class PunishGUI implements Listener {
 
             if (isMute) {
                 data.setMute(target.getUniqueId(), expiry.toEpochMilli());
-                moderator.sendMessage("§aYou have muted " + target.getName() + " for " + reason + ".");
+                moderator.sendMessage(de ? "§aDu hast " + target.getName() + " für " + reason + " gemutet."
+                        : "§aYou have muted " + target.getName() + " for " + reason + ".");
                 if (target.isOnline() && target.getPlayer() != null) {
-                    target.getPlayer().sendMessage("§cYou have been muted!\n§7Reason: " + reason + "\n§7Duration: " + durationLog);
+                    target.getPlayer().sendMessage((de ? "§cDu wurdest gemutet!\n§7Grund: " : "§cYou have been muted!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + durationLog);
                 }
-                data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") by " + moderator.getName());
+                data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
             } else {
                 ProfileBanList banList = Bukkit.getBanList(BanList.Type.PROFILE);
                 banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), moderator.getName());
 
                 if (target.isOnline() && target.getPlayer() != null) {
-                    target.getPlayer().kickPlayer("§cYou have been banned from the server!\n§7Reason: " + reason + "\n§7Duration: " + durationLog);
+                    target.getPlayer().kickPlayer((de ? "§cDu wurdest gebannt!\n§7Grund: " : "§cYou have been banned!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + durationLog);
                 }
-                moderator.sendMessage("§aYou have successfully banned " + target.getName() + ".");
-                data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") by " + moderator.getName());
+                moderator.sendMessage(de ? "§aDu hast " + target.getName() + " erfolgreich gebannt."
+                        : "§aYou have successfully banned " + target.getName() + ".");
+                data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
             }
 
             PunishPlugin.getInstance().getPunishLogger().logBan(moderator.getName(), target.getName(), reason, durationLog);

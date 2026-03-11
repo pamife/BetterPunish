@@ -12,3 +12,6 @@ commands:
   unpunish:
     description: Lifts an active punishment
     permission: punish.unpunish
+  punishlang:
+    description: Changes your personal plugin language (en/de)
+    permission: punish.use

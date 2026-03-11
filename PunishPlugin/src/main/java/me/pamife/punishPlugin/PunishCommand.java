@@ -17,27 +17,32 @@ public class PunishCommand implements CommandExecutor {
 
     @Override
     public boolean onCommand(CommandSender sender, Command command, String label, String[] args) {
+        boolean de = false;
+        if (sender instanceof Player) {
+            de = PunishPlugin.getInstance().getDataManager().getLanguage(((Player) sender).getUniqueId()).equals("de");
+        }
+
         if (!sender.hasPermission("punish.use")) {
-            sender.sendMessage("§cYou do not have permission to do this!");
+            sender.sendMessage(de ? "§cDu hast keine Rechte dafür!" : "§cYou do not have permission to do this!");
             return true;
         }
 
         if (args.length == 0) {
-            sender.sendMessage("§cUsage:");
-            sender.sendMessage("§cGUI: /punish <Player>");
-            sender.sendMessage("§cCustom: /punish <Player> <Time (e.g., 5d, 12h)> <Reason>");
+            sender.sendMessage(de ? "§cVerwendung:" : "§cUsage:");
+            sender.sendMessage(de ? "§cGUI: /punish <Spieler>" : "§cGUI: /punish <Player>");
+            sender.sendMessage(de ? "§cCustom: /punish <Spieler> <Zeit(z.B. 5d, 12h)> <Grund>" : "§cCustom: /punish <Player> <Time (e.g., 5d, 12h)> <Reason>");
             return true;
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
         if (!target.hasPlayedBefore() && !target.isOnline()) {
-            sender.sendMessage("§cThis player has never been on the server.");
+            sender.sendMessage(de ? "§cDieser Spieler war noch nie auf dem Server." : "§cThis player has never been on the server.");
             return true;
         }
 
         if (args.length == 1) {
             if (!(sender instanceof Player)) {
-                sender.sendMessage("The GUI can only be opened by players.");
+                sender.sendMessage(de ? "Die GUI kann nur von Spielern geöffnet werden." : "The GUI can only be opened by players.");
                 return true;
             }
             PunishGUI.openGUI((Player) sender, target);
@@ -45,7 +50,7 @@ public class PunishCommand implements CommandExecutor {
         }
 
         if (args.length < 3) {
-            sender.sendMessage("§cPlease provide a reason. Example: /punish Player 5d Hacking");
+            sender.sendMessage(de ? "§cBitte gib einen Grund an. Beispiel: /punish Spieler 5d Hacking" : "§cPlease provide a reason. Example: /punish Player 5d Hacking");
             return true;
         }
 
@@ -53,7 +58,7 @@ public class PunishCommand implements CommandExecutor {
         Instant expiry = parseDuration(timeInput);
 
         if (expiry == null) {
-            sender.sendMessage("§cInvalid time format! Use s(sec), m(min), h(hours), d(days), w(weeks). Ex: 5d");
+            sender.sendMessage(de ? "§cUngültiges Zeitformat! Nutze s(Sek), m(Min), h(Std), d(Tage), w(Wochen)." : "§cInvalid time format! Use s(sec), m(min), h(hours), d(days), w(weeks).");
             return true;
         }
 
@@ -67,13 +72,14 @@ public class PunishCommand implements CommandExecutor {
         banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), sender.getName());
 
         if (target.isOnline() && target.getPlayer() != null) {
-            target.getPlayer().kickPlayer("§cYou have been banned from the server!\n§7Reason: " + reason + "\n§7Duration: " + timeInput);
+            target.getPlayer().kickPlayer((de ? "§cDu wurdest gebannt!\n§7Grund: " : "§cYou have been banned!\n§7Reason: ") + reason + (de ? "\n§7Dauer: " : "\n§7Duration: ") + timeInput);
         }
 
         PunishPlugin.getInstance().getPunishLogger().logBan(sender.getName(), target.getName(), reason, timeInput);
-        PunishPlugin.getInstance().getDataManager().addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + timeInput + ") by " + sender.getName());
+        PunishPlugin.getInstance().getDataManager().addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + timeInput + ") " + (de ? "von " : "by ") + sender.getName());
 
-        sender.sendMessage("§aYou have successfully punished " + target.getName() + " for " + timeInput + ". (Reason: " + reason + ")");
+        sender.sendMessage(de ? "§aDu hast " + target.getName() + " erfolgreich für " + timeInput + " bestraft. (Grund: " + reason + ")"
+                : "§aYou have successfully punished " + target.getName() + " for " + timeInput + ". (Reason: " + reason + ")");
         return true;
     }
 

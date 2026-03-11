@@ -25,6 +25,7 @@ public class PunishPlugin extends JavaPlugin {
         getCommand("punish").setExecutor(new PunishCommand());
         getCommand("history").setExecutor(new HistoryCommand());
         getCommand("unpunish").setExecutor(new UnpunishCommand());
+        getCommand("punishlang").setExecutor(new LanguageCommand()); // NEU
 
         getLogger().info("BetterPunish plugin has been enabled!");
     }

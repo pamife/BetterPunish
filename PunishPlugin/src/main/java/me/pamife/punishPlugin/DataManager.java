@@ -41,6 +41,18 @@ public class DataManager {
         }
     }
 
+    // --- SPRACH SYSTEM (NEU) ---
+    public void setLanguage(UUID uuid, String lang) {
+        config.set("Language." + uuid.toString(), lang);
+        save();
+    }
+
+    public String getLanguage(UUID uuid) {
+        // Standardmäßig Englisch ("en"), wenn noch nichts gesetzt wurde
+        return config.getString("Language." + uuid.toString(), "en");
+    }
+
+    // --- MUTE SYSTEM ---
     public void setMute(UUID uuid, long expiryMillis) {
         config.set("Mutes." + uuid.toString(), expiryMillis);
         save();
@@ -61,6 +73,7 @@ public class DataManager {
         return true;
     }
 
+    // --- VERGEHEN (OFFENSES) ---
     public int getOffenseCount(UUID uuid, String reason) {
         return config.getInt("Offenses." + uuid.toString() + "." + reason, 0);
     }
@@ -71,6 +84,7 @@ public class DataManager {
         save();
     }
 
+    // --- HISTORIE ---
     public void addHistory(UUID uuid, String logEntry) {
         List<String> history = config.getStringList("History." + uuid.toString());
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
