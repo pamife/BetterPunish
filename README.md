@@ -1,18 +1,18 @@
 # BetterPunish ⚖️
 
-**BetterPunish** is a professional, lightweight, and high-performance punishment system for Minecraft servers running on **Paper** or **Purpur** (1.21.1+). It features a fully customizable GUI, an automated warning system, and multi-language support.
+**BetterPunish** is a high-performance, all-in-one punishment and moderation suite for Minecraft servers (**Paper/Purpur 1.21.1+**). It combines intuitive GUIs, automated chat protection, and deep customization to make server management effortless.
 
 ---
 
-## ✨ Features
+## ✨ Key Features
 
-* **⚠️ Advanced Warning System:** Warn players with `/warn`. Reaching **3 warnings** triggers an automatic 1-hour mute to reduce manual moderation.
-* **🖼️ Dynamic GUI:** A clean, glass-framed interface featuring the target player's head. Everything from items to durations is now fully configurable via `config.yml`.
-* **🌍 Multi-Language System:** Moderators can choose their preferred language (`/punishlang en/de`). Settings are saved per moderator UUID.
-* **🕵️ Offline Support:** Punish players even if they are not currently online.
-* **📜 Detailed History:** View a complete log of a player's past offenses, warns, and bans with `/history`.
-* **⚙️ Fully Customizable:** Server owners can edit every message, ban reason, and punishment duration in the config.
-* **📂 Clean Logging:** All actions are archived in a human-readable `punish_log.txt` file.
+* **🛡️ Smart Chat Filter:** Automatically blocks forbidden words and links. Optionally issues strikes to offenders.
+* **⚠️ Advanced Warning System:** Warn players for minor offenses. Reaching **3 warnings** triggers an automatic 1-hour mute.
+* **📋 Active Punishments GUI:** A dedicated menu (`/punishments`) to view and lift all current bans and mutes with a single click.
+* **🖼️ Dynamic GUI:** Sleek, glass-framed interface featuring target player heads. Fully configurable via `config.yml`.
+* **🌍 Multi-Language:** Individual language settings (EN/DE) for every moderator, saved via UUID.
+* **🔔 Staff Notifications:** Keep your team informed with real-time alerts for punishments and filter triggers. Toggleable via `/punishnotify`.
+* **⚙️ Live Reload:** Update your entire configuration and filter list without restarting the server using `/punishreload`.
 
 ---
 
@@ -20,13 +20,20 @@
 
 | Command | Description | Permission |
 | :--- | :--- | :--- |
-| `/punish <player>` | Opens the punishment GUI or applies a manual ban. | `punish.use` |
-| `/warn <player> <reason>`| Warns a player. Auto-mutes at 3 warnings. | `punish.use` |
-| `/history <player>` | Displays the full punishment history of a player. | `punish.history` |
-| `/unpunish <player>` | Lifts an active ban or mute. | `punish.unpunish` |
-| `/punishlang <en/de>` | Sets your personal language for the plugin. | `punish.use` |
+| `/punish <player>` | Opens the main punishment GUI | `punish.use` |
+| `/punishments` | Opens the active punishments manager | `punish.admin` |
+| `/warn <player> <reason>` | Issues a warning (Auto-mute at 3) | `punish.use` |
+| `/history <player>` | Displays a player's full offense log | `punish.history` |
+| `/unpunish <player>` | Manually lifts a ban or mute | `punish.unpunish` |
+| `/punishreload` | Reloads config and data files | `punish.admin` |
+| `/punishnotify` | Toggles staff alerts for yourself | `punish.staff` |
 
 ---
+
+## 💻 Compatibility
+* **Platform:** Paper, Purpur (Recommended)
+* **Java:** Version 21 or higher
+* **Version:** 1.21.x
 
 ## 📥 Installation
 
