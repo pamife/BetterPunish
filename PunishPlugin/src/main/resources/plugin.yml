@@ -24,3 +24,6 @@ commands:
   punishnotify:
     description: Toggles staff notifications on or off for you.
     permission: punish.staff
+  punishments:
+    description: Opens a GUI showing all currently active bans and mutes.
+    permission: punish.admin

@@ -24,16 +24,16 @@ public class PunishPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PunishGUI(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
+        getServer().getPluginManager().registerEvents(new ActivePunishmentsGUI(), this); // NEU
 
         getCommand("punish").setExecutor(new PunishCommand());
         getCommand("history").setExecutor(new HistoryCommand());
         getCommand("unpunish").setExecutor(new UnpunishCommand());
         getCommand("punishlang").setExecutor(new LanguageCommand());
         getCommand("warn").setExecutor(new WarnCommand());
-
-        // NEUE BEFEHLE:
         getCommand("punishreload").setExecutor(new ReloadCommand());
         getCommand("punishnotify").setExecutor(new NotifyCommand());
+        getCommand("punishments").setExecutor(new PunishmentsCommand()); // NEU
 
         getLogger().info("BetterPunish plugin has been enabled!");
     }

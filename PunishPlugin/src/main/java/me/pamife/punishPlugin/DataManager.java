@@ -12,6 +12,7 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.UUID;
@@ -49,14 +50,12 @@ public class DataManager {
         }
     }
 
-    // --- RELOAD SYSTEM (NEU) ---
     public void reloadConfigs() {
         plugin.reloadConfig();
         this.config = plugin.getConfig();
         dataConfig = YamlConfiguration.loadConfiguration(dataFile);
     }
 
-    // --- CONFIG SYSTEM ---
     public String getMessage(String path, String lang) {
         String prefix = config.getString("prefix", "&8[&6⚖ BetterPunish&8] &7");
         String message = config.getString("messages." + path + "." + lang);
@@ -74,7 +73,6 @@ public class DataManager {
         return config.getConfigurationSection("gui-items");
     }
 
-    // --- TIME PARSER ---
     public Instant parseDuration(String input) {
         if (input == null || input.isEmpty()) return null;
         char unit = input.charAt(input.length() - 1);
@@ -96,7 +94,6 @@ public class DataManager {
         }
     }
 
-    // --- SPRACH SYSTEM ---
     public void setLanguage(UUID uuid, String lang) {
         dataConfig.set("Language." + uuid.toString(), lang);
         saveData();
@@ -106,9 +103,7 @@ public class DataManager {
         return dataConfig.getString("Language." + uuid.toString(), config.getString("default-language", "en"));
     }
 
-    // --- STAFF NOTIFICATIONS (NEU) ---
     public boolean isNotifyEnabled(UUID uuid) {
-        // Standardmäßig auf true, falls noch nie geändert
         return dataConfig.getBoolean("Notifications." + uuid.toString(), true);
     }
 
@@ -150,6 +145,27 @@ public class DataManager {
             return false;
         }
         return true;
+    }
+
+    // NEU FÜR DAS GUI: Gibt alle aktiven Mutes als Liste zurück
+    public List<UUID> getActiveMutes() {
+        List<UUID> activeMutes = new ArrayList<>();
+        if (dataConfig.contains("Mutes")) {
+            for (String key : dataConfig.getConfigurationSection("Mutes").getKeys(false)) {
+                try {
+                    UUID uuid = UUID.fromString(key);
+                    if (isMuted(uuid)) {
+                        activeMutes.add(uuid);
+                    }
+                } catch (IllegalArgumentException ignored) {}
+            }
+        }
+        return activeMutes;
+    }
+
+    // NEU FÜR DAS GUI: Holt die Endzeit eines Mutes
+    public long getMuteExpiry(UUID uuid) {
+        return dataConfig.getLong("Mutes." + uuid.toString(), 0);
     }
 
     // --- WARN SYSTEM ---
