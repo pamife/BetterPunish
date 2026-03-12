@@ -7,6 +7,7 @@ public class PunishPlugin extends JavaPlugin {
     private static PunishPlugin instance;
     private PunishLogger punishLogger;
     private DataManager dataManager;
+    private FilterManager filterManager;
 
     @Override
     public void onEnable() {
@@ -19,6 +20,7 @@ public class PunishPlugin extends JavaPlugin {
         saveDefaultConfig();
         dataManager = new DataManager(this);
         punishLogger = new PunishLogger(this);
+        filterManager = new FilterManager(this);
 
         getServer().getPluginManager().registerEvents(new PunishGUI(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
@@ -27,7 +29,7 @@ public class PunishPlugin extends JavaPlugin {
         getCommand("history").setExecutor(new HistoryCommand());
         getCommand("unpunish").setExecutor(new UnpunishCommand());
         getCommand("punishlang").setExecutor(new LanguageCommand());
-        getCommand("warn").setExecutor(new WarnCommand()); // NEU
+        getCommand("warn").setExecutor(new WarnCommand());
 
         getLogger().info("BetterPunish plugin has been enabled!");
     }
@@ -42,5 +44,9 @@ public class PunishPlugin extends JavaPlugin {
 
     public DataManager getDataManager() {
         return dataManager;
+    }
+
+    public FilterManager getFilterManager() {
+        return filterManager;
     }
 }

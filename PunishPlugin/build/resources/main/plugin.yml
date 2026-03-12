@@ -1,5 +1,5 @@
 name: PunishPlugin
-version: '1.0-SNAPSHOT'
+version: '1.0'
 main: me.pamife.punishPlugin.PunishPlugin
 api-version: '1.21'
 commands:
@@ -14,4 +14,7 @@ commands:
     permission: punish.unpunish
   punishlang:
     description: Changes your personal plugin language (en/de)
+    permission: punish.use
+  warn:
+    description: Warns a player. Auto-mutes on 3 warnings.
     permission: punish.use

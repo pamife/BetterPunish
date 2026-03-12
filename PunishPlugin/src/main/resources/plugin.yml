@@ -1,5 +1,5 @@
 name: PunishPlugin
-version: '1.0-SNAPSHOT'
+version: '1.0'
 main: me.pamife.punishPlugin.PunishPlugin
 api-version: '1.21'
 commands:

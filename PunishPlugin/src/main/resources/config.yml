@@ -2,6 +2,22 @@
 prefix: "&8[&6⚖ BetterPunish&8] &7"
 default-language: "en"
 
+# --- CHAT FILTER SYSTEM ---
+chat-filter:
+  enabled: true
+  # Should the player automatically get a warning (/warn) if a word is caught?
+  auto-warn: true
+
+  # Words the server owner wants to block
+  banned-words:
+    - "badword1"
+    - "anotherserver.com"
+    - "some-spam-link"
+
+  # Words that should ALWAYS be allowed (Bypass), even if they contain a banned word
+  allowed-words:
+    - "discord.gg/ourserver"
+
 # --- GUI ITEMS (PUNISHMENTS) ---
 gui-items:
   '10':
@@ -174,3 +190,6 @@ messages:
   auto-mute-mod:
     en: "&e%player% reached 3 warnings and was auto-muted for 1 hour."
     de: "&e%player% hat 3 Warnungen erreicht und wurde für 1 Stunde gemutet."
+  filter-caught:
+    en: "&cYour message was blocked because it contains forbidden words!"
+    de: "&cDeine Nachricht wurde blockiert, da sie verbotene Wörter enthält!"

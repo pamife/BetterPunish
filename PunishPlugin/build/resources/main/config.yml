@@ -3,10 +3,6 @@ prefix: "&8[&6⚖ BetterPunish&8] &7"
 default-language: "en"
 
 # --- GUI ITEMS (PUNISHMENTS) ---
-# You can add as many items as you want.
-# Slots: 0-26 (Slot 4 is reserved for the player head. Slots with glass are overridden).
-# Type: BAN or MUTE
-# Durations: s (sec), m (min), h (hours), d (days), w (weeks). 3650d = 10 Years (Permanent)
 gui-items:
   '10':
     material: DIAMOND_SWORD
@@ -110,8 +106,8 @@ messages:
     en: "&cUsage: /punish <Player> [Time (e.g., 5d)] [Reason]"
     de: "&cVerwendung: /punish <Spieler> [Zeit (z.B. 5d)] [Grund]"
   missing-reason:
-    en: "&cPlease provide a reason. Example: /punish Player 5d Hacking"
-    de: "&cBitte gib einen Grund an. Beispiel: /punish Spieler 5d Hacking"
+    en: "&cPlease provide a reason."
+    de: "&cBitte gib einen Grund an."
   invalid-time:
     en: "&cInvalid time format! Use s, m, h, d, w. Ex: 5d"
     de: "&cUngültiges Zeitformat! Nutze s, m, h, d, w. Bsp: 5d"
@@ -163,3 +159,18 @@ messages:
   lang-invalid:
     en: "&cAvailable languages: en, de"
     de: "&cVerfügbare Sprachen: en, de"
+  usage-warn:
+    en: "&cUsage: /warn <Player> <Reason>"
+    de: "&cVerwendung: /warn <Spieler> <Grund>"
+  warn-success:
+    en: "&aYou have warned %player% for: %reason%. (Warns: %count%/3)"
+    de: "&aDu hast %player% verwarnt für: %reason%. (Warnungen: %count%/3)"
+  warn-notify:
+    en: "&cYou have been warned!\n&7Reason: %reason%\n&eWarning %count% of 3."
+    de: "&cDu wurdest verwarnt!\n&7Grund: %reason%\n&eWarnung %count% von 3."
+  auto-mute-notify:
+    en: "&cYou have been automatically muted for 1 hour due to 3 warnings!"
+    de: "&cDu wurdest automatisch für 1 Stunde gemutet, da du 3 Warnungen erhalten hast!"
+  auto-mute-mod:
+    en: "&e%player% reached 3 warnings and was auto-muted for 1 hour."
+    de: "&e%player% hat 3 Warnungen erreicht und wurde für 1 Stunde gemutet."
