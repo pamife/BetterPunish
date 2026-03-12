@@ -15,26 +15,24 @@ public class ChatListener implements Listener {
         DataManager dm = plugin.getDataManager();
         String lang = dm.getLanguage(player.getUniqueId());
 
-        // 1. Mute Check
         if (dm.isMuted(player.getUniqueId())) {
             event.setCancelled(true);
             player.sendMessage(dm.getMessage("mute-message", lang));
             return;
         }
 
-        // 2. Chat Filter Check (Überspringt Mods mit bypassfilter Permission)
         if (!player.hasPermission("punish.bypassfilter")) {
             String caughtWord = plugin.getFilterManager().getCaughtWord(event.getMessage());
 
             if (caughtWord != null) {
-                event.setCancelled(true); // Blockiert die Nachricht komplett
+                event.setCancelled(true);
 
-                // Nachricht an den Spieler (aus der config.yml)
                 player.sendMessage(dm.getMessage("filter-caught", lang));
 
-                // Optionale Auto-Warnung ausführen, wenn in Config aktiviert
+                // NOTIFICATION AN DAS TEAM:
+                dm.broadcastStaffMessage("staff-notify-filter", player.getName(), "System", caughtWord);
+
                 if (plugin.getConfig().getBoolean("chat-filter.auto-warn", true)) {
-                    // Wir führen den Warn-Befehl über die Konsole aus, um die Logik aus WarnCommand zu nutzen
                     Bukkit.getScheduler().runTask(plugin, () -> {
                         Bukkit.dispatchCommand(Bukkit.getConsoleSender(), "warn " + player.getName() + " Chat-Filter: " + caughtWord);
                     });

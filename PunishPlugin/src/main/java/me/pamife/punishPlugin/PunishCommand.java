@@ -50,7 +50,7 @@ public class PunishCommand implements CommandExecutor {
         }
 
         String timeInput = args[1].toLowerCase();
-        Instant expiry = dm.parseDuration(timeInput); // Geändert: Nutzt jetzt DataManager
+        Instant expiry = dm.parseDuration(timeInput);
 
         if (expiry == null) {
             sender.sendMessage(dm.getMessage("invalid-time", lang));
@@ -82,6 +82,9 @@ public class PunishCommand implements CommandExecutor {
                 .replace("%time%", timeInput)
                 .replace("%reason%", reason);
         sender.sendMessage(successMsg);
+
+        // STAFF BENACHRICHTIGEN
+        dm.broadcastStaffMessage("staff-notify-punish", target.getName(), sender.getName(), reason);
 
         return true;
     }

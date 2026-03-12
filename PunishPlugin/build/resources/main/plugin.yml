@@ -1,5 +1,5 @@
 name: PunishPlugin
-version: '1.0'
+version: '1.0-SNAPSHOT'
 main: me.pamife.punishPlugin.PunishPlugin
 api-version: '1.21'
 commands:
@@ -18,3 +18,9 @@ commands:
   warn:
     description: Warns a player. Auto-mutes on 3 warnings.
     permission: punish.use
+  punishreload:
+    description: Reloads the configuration files.
+    permission: punish.admin
+  punishnotify:
+    description: Toggles staff notifications on or off for you.
+    permission: punish.staff

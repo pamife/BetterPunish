@@ -31,6 +31,10 @@ public class PunishPlugin extends JavaPlugin {
         getCommand("punishlang").setExecutor(new LanguageCommand());
         getCommand("warn").setExecutor(new WarnCommand());
 
+        // NEUE BEFEHLE:
+        getCommand("punishreload").setExecutor(new ReloadCommand());
+        getCommand("punishnotify").setExecutor(new NotifyCommand());
+
         getLogger().info("BetterPunish plugin has been enabled!");
     }
 

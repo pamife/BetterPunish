@@ -1,9 +1,11 @@
 package me.pamife.punishPlugin;
 
+import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
 import org.bukkit.configuration.file.YamlConfiguration;
+import org.bukkit.entity.Player;
 
 import java.io.File;
 import java.io.IOException;
@@ -45,6 +47,13 @@ public class DataManager {
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+    // --- RELOAD SYSTEM (NEU) ---
+    public void reloadConfigs() {
+        plugin.reloadConfig();
+        this.config = plugin.getConfig();
+        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
     }
 
     // --- CONFIG SYSTEM ---
@@ -97,6 +106,31 @@ public class DataManager {
         return dataConfig.getString("Language." + uuid.toString(), config.getString("default-language", "en"));
     }
 
+    // --- STAFF NOTIFICATIONS (NEU) ---
+    public boolean isNotifyEnabled(UUID uuid) {
+        // Standardmäßig auf true, falls noch nie geändert
+        return dataConfig.getBoolean("Notifications." + uuid.toString(), true);
+    }
+
+    public void setNotifyEnabled(UUID uuid, boolean enabled) {
+        dataConfig.set("Notifications." + uuid.toString(), enabled);
+        saveData();
+    }
+
+    public void broadcastStaffMessage(String path, String target, String moderator, String reasonOrWord) {
+        for (Player p : Bukkit.getOnlinePlayers()) {
+            if (p.hasPermission("punish.staff") && isNotifyEnabled(p.getUniqueId())) {
+                String lang = getLanguage(p.getUniqueId());
+                String msg = getMessage(path, lang)
+                        .replace("%player%", target)
+                        .replace("%moderator%", moderator)
+                        .replace("%reason%", reasonOrWord)
+                        .replace("%word%", reasonOrWord);
+                p.sendMessage(msg);
+            }
+        }
+    }
+
     // --- MUTE SYSTEM ---
     public void setMute(UUID uuid, long expiryMillis) {
         dataConfig.set("Mutes." + uuid.toString(), expiryMillis);
@@ -118,7 +152,7 @@ public class DataManager {
         return true;
     }
 
-    // --- WARN SYSTEM (NEU) ---
+    // --- WARN SYSTEM ---
     public int getWarnCount(UUID uuid) {
         return dataConfig.getInt("Warns." + uuid.toString(), 0);
     }

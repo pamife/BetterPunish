@@ -5,16 +5,10 @@ default-language: "en"
 # --- CHAT FILTER SYSTEM ---
 chat-filter:
   enabled: true
-  # Should the player automatically get a warning (/warn) if a word is caught?
   auto-warn: true
-
-  # Words the server owner wants to block
   banned-words:
     - "badword1"
     - "anotherserver.com"
-    - "some-spam-link"
-
-  # Words that should ALWAYS be allowed (Bypass), even if they contain a banned word
   allowed-words:
     - "discord.gg/ourserver"
 
@@ -193,3 +187,21 @@ messages:
   filter-caught:
     en: "&cYour message was blocked because it contains forbidden words!"
     de: "&cDeine Nachricht wurde blockiert, da sie verbotene Wörter enthält!"
+  reload-success:
+    en: "&aConfiguration and data successfully reloaded!"
+    de: "&aKonfiguration und Daten erfolgreich neu geladen!"
+  notify-enabled:
+    en: "&aStaff notifications enabled!"
+    de: "&aTeam-Benachrichtigungen aktiviert!"
+  notify-disabled:
+    en: "&cStaff notifications disabled!"
+    de: "&cTeam-Benachrichtigungen deaktiviert!"
+  staff-notify-punish:
+    en: "&8[&cStaff&8] &e%player% &7was punished by &e%moderator% &7for &c%reason%&7."
+    de: "&8[&cTeam&8] &e%player% &7wurde von &e%moderator% &7für &c%reason% &7bestraft."
+  staff-notify-warn:
+    en: "&8[&cStaff&8] &e%player% &7was warned by &e%moderator% &7for &c%reason%&7."
+    de: "&8[&cTeam&8] &e%player% &7wurde von &e%moderator% &7für &c%reason% &7verwarnt."
+  staff-notify-filter:
+    en: "&8[&cStaff&8] &e%player% &7tried to say a blocked word: &c%word%"
+    de: "&8[&cTeam&8] &e%player% &7versuchte ein blockiertes Wort zu nutzen: &c%word%"

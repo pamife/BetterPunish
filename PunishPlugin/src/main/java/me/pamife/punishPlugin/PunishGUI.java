@@ -18,7 +18,7 @@ import org.bukkit.inventory.meta.SkullMeta;
 
 import java.time.Instant;
 import java.util.ArrayList;
-import java.util.Arrays; // <-- Das hat gefehlt!
+import java.util.Arrays;
 import java.util.Date;
 import java.util.List;
 
@@ -154,6 +154,10 @@ public class PunishGUI implements Listener {
                 target.getPlayer().sendMessage(notifyMsg);
             }
             data.addHistory(target.getUniqueId(), "§eMute: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
+
+            // STAFF BENACHRICHTIGEN
+            data.broadcastStaffMessage("staff-notify-punish", target.getName(), moderator.getName(), reason);
+
         } else {
             ProfileBanList banList = Bukkit.getBanList(BanList.Type.PROFILE);
             banList.addBan(target.getPlayerProfile(), reason, Date.from(expiry), moderator.getName());
@@ -167,6 +171,9 @@ public class PunishGUI implements Listener {
             moderator.sendMessage(successMsg);
 
             data.addHistory(target.getUniqueId(), "§cBan: §7" + reason + " (" + durationLog + ") " + (de ? "von " : "by ") + moderator.getName());
+
+            // STAFF BENACHRICHTIGEN
+            data.broadcastStaffMessage("staff-notify-punish", target.getName(), moderator.getName(), reason);
         }
 
         PunishPlugin.getInstance().getPunishLogger().logBan(moderator.getName(), target.getName(), reason, durationLog);

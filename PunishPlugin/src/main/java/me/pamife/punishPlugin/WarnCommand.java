@@ -46,6 +46,9 @@ public class WarnCommand implements CommandExecutor {
 
         dm.addHistory(target.getUniqueId(), "§eWarn (" + warnCount + "/3): §7" + reason + " by " + sender.getName());
 
+        // STAFF BENACHRICHTIGEN
+        dm.broadcastStaffMessage("staff-notify-warn", target.getName(), sender.getName(), reason);
+
         // Nachricht an den Ausführenden
         String successMsg = dm.getMessage("warn-success", lang)
                 .replace("%player%", target.getName())
