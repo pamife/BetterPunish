@@ -8,6 +8,9 @@ public class PunishPlugin extends JavaPlugin {
     private PunishLogger punishLogger;
     private DataManager dataManager;
     private FilterManager filterManager;
+    private DiscordManager discordManager;
+    private DatabaseManager databaseManager;
+    private APIManager apiManager; // NEU
 
     @Override
     public void onEnable() {
@@ -18,13 +21,24 @@ public class PunishPlugin extends JavaPlugin {
         }
 
         saveDefaultConfig();
+
+        databaseManager = new DatabaseManager(this);
+        databaseManager.connect();
+
+        discordManager = new DiscordManager(this);
         dataManager = new DataManager(this);
         punishLogger = new PunishLogger(this);
         filterManager = new FilterManager(this);
 
+        // API Starten
+        apiManager = new APIManager(this);
+        apiManager.start();
+
         getServer().getPluginManager().registerEvents(new PunishGUI(), this);
         getServer().getPluginManager().registerEvents(new ChatListener(), this);
-        getServer().getPluginManager().registerEvents(new ActivePunishmentsGUI(), this); // NEU
+        getServer().getPluginManager().registerEvents(new ActivePunishmentsGUI(), this);
+        getServer().getPluginManager().registerEvents(new HistoryGUI(), this);
+        getServer().getPluginManager().registerEvents(new ReportsGUI(), this);
 
         getCommand("punish").setExecutor(new PunishCommand());
         getCommand("history").setExecutor(new HistoryCommand());
@@ -33,13 +47,30 @@ public class PunishPlugin extends JavaPlugin {
         getCommand("warn").setExecutor(new WarnCommand());
         getCommand("punishreload").setExecutor(new ReloadCommand());
         getCommand("punishnotify").setExecutor(new NotifyCommand());
-        getCommand("punishments").setExecutor(new PunishmentsCommand()); // NEU
+        getCommand("punishments").setExecutor(new PunishmentsCommand());
+        getCommand("report").setExecutor(new ReportCommand());
+        getCommand("reports").setExecutor(new ReportsCommand());
+        getCommand("webpanel").setExecutor(new WebpanelCommand());
 
         getLogger().info("BetterPunish plugin has been enabled!");
     }
 
+    @Override
+    public void onDisable() {
+        if (databaseManager != null) {
+            databaseManager.disconnect();
+        }
+        if (apiManager != null) {
+            apiManager.stop(); // API sicher herunterfahren
+        }
+    }
+
     public static PunishPlugin getInstance() {
         return instance;
+    }
+
+    public DatabaseManager getDatabaseManager() {
+        return databaseManager;
     }
 
     public PunishLogger getPunishLogger() {
@@ -52,5 +83,13 @@ public class PunishPlugin extends JavaPlugin {
 
     public FilterManager getFilterManager() {
         return filterManager;
+    }
+
+    public DiscordManager getDiscordManager() {
+        return discordManager;
+    }
+
+    public APIManager getApiManager() {
+        return apiManager;
     }
 }

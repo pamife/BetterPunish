@@ -27,6 +27,15 @@ public class HistoryCommand implements CommandExecutor {
         }
 
         OfflinePlayer target = Bukkit.getOfflinePlayer(args[0]);
+
+        // WENN DER SENDER EIN SPIELER IST -> GUI ÖFFNEN
+        if (sender instanceof Player) {
+            Player admin = (Player) sender;
+            HistoryGUI.openGUI(admin, target);
+            return true;
+        }
+
+        // FALLBACK FÜR DIE KONSOLE (Textausgabe)
         List<String> history = dm.getHistory(target.getUniqueId());
 
         if (history.isEmpty()) {

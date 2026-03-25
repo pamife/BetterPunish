@@ -2,6 +2,8 @@ package me.pamife.punishPlugin;
 
 import org.bukkit.configuration.ConfigurationSection;
 import java.util.List;
+import java.util.regex.Pattern;
+import java.util.regex.PatternSyntaxException;
 
 public class FilterManager {
 
@@ -31,11 +33,28 @@ public class FilterManager {
             }
         }
 
-        // 2. Check Banned Words aus der Config
+        // 2. Check Banned Words & Regex
         List<String> bannedWords = filterConfig.getStringList("banned-words");
         for (String banned : bannedWords) {
-            if (lowerMsg.contains(banned.toLowerCase())) {
-                return banned;
+
+            // REGEX CHECK: Wenn der Config-Eintrag mit "regex:" beginnt
+            if (banned.toLowerCase().startsWith("regex:")) {
+                String regexPattern = banned.substring(6).trim(); // Schneidet "regex:" ab
+                try {
+                    // Compiliert den Regex (Case Insensitive)
+                    Pattern pattern = Pattern.compile(regexPattern, Pattern.CASE_INSENSITIVE);
+                    if (pattern.matcher(message).find()) {
+                        return "Regex-Match (" + regexPattern + ")"; // Gibt Regex-Pattern als Grund zurück
+                    }
+                } catch (PatternSyntaxException e) {
+                    plugin.getLogger().warning("Ungültiger Regex im Chat-Filter gefunden: " + regexPattern);
+                }
+            }
+            // STANDARD CHECK: Normales Wort
+            else {
+                if (lowerMsg.contains(banned.toLowerCase())) {
+                    return banned;
+                }
             }
         }
 

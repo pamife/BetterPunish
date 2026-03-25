@@ -4,11 +4,11 @@ import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.FileConfiguration;
-import org.bukkit.configuration.file.YamlConfiguration;
 import org.bukkit.entity.Player;
 
-import java.io.File;
-import java.io.IOException;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.text.SimpleDateFormat;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
@@ -20,40 +20,18 @@ import java.util.UUID;
 public class DataManager {
 
     private final PunishPlugin plugin;
-    private File dataFile;
-    private FileConfiguration dataConfig;
     private FileConfiguration config;
+    private final DatabaseManager db;
 
     public DataManager(PunishPlugin plugin) {
         this.plugin = plugin;
         this.config = plugin.getConfig();
-        setupData();
-    }
-
-    private void setupData() {
-        dataFile = new File(plugin.getDataFolder(), "data.yml");
-        if (!dataFile.exists()) {
-            try {
-                dataFile.createNewFile();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
-    }
-
-    public void saveData() {
-        try {
-            dataConfig.save(dataFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        this.db = plugin.getDatabaseManager();
     }
 
     public void reloadConfigs() {
         plugin.reloadConfig();
         this.config = plugin.getConfig();
-        dataConfig = YamlConfiguration.loadConfiguration(dataFile);
     }
 
     public String getMessage(String path, String lang) {
@@ -94,33 +72,55 @@ public class DataManager {
         }
     }
 
+    // --- SETTINGS (Language & Notify) ---
     public void setLanguage(UUID uuid, String lang) {
-        dataConfig.set("Language." + uuid.toString(), lang);
-        saveData();
+        boolean currentNotify = isNotifyEnabled(uuid);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("REPLACE INTO punish_settings (uuid, language, notify) VALUES (?, ?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, lang);
+                ps.setBoolean(3, currentNotify);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public String getLanguage(UUID uuid) {
-        return dataConfig.getString("Language." + uuid.toString(), config.getString("default-language", "en"));
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT language FROM punish_settings WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getString("language");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return config.getString("default-language", "en");
     }
 
     public boolean isNotifyEnabled(UUID uuid) {
-        return dataConfig.getBoolean("Notifications." + uuid.toString(), true);
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT notify FROM punish_settings WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getBoolean("notify");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return true;
     }
 
     public void setNotifyEnabled(UUID uuid, boolean enabled) {
-        dataConfig.set("Notifications." + uuid.toString(), enabled);
-        saveData();
+        String currentLang = getLanguage(uuid);
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("REPLACE INTO punish_settings (uuid, language, notify) VALUES (?, ?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, currentLang);
+                ps.setBoolean(3, enabled);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public void broadcastStaffMessage(String path, String target, String moderator, String reasonOrWord) {
+        plugin.getDiscordManager().sendWebhook(path, target, moderator, reasonOrWord);
         for (Player p : Bukkit.getOnlinePlayers()) {
             if (p.hasPermission("punish.staff") && isNotifyEnabled(p.getUniqueId())) {
                 String lang = getLanguage(p.getUniqueId());
-                String msg = getMessage(path, lang)
-                        .replace("%player%", target)
-                        .replace("%moderator%", moderator)
-                        .replace("%reason%", reasonOrWord)
-                        .replace("%word%", reasonOrWord);
+                String msg = getMessage(path, lang).replace("%player%", target).replace("%moderator%", moderator).replace("%reason%", reasonOrWord).replace("%word%", reasonOrWord);
                 p.sendMessage(msg);
             }
         }
@@ -128,80 +128,177 @@ public class DataManager {
 
     // --- MUTE SYSTEM ---
     public void setMute(UUID uuid, long expiryMillis) {
-        dataConfig.set("Mutes." + uuid.toString(), expiryMillis);
-        saveData();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("REPLACE INTO punish_mutes (uuid, expiry) VALUES (?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setLong(2, expiryMillis);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public void removeMute(UUID uuid) {
-        dataConfig.set("Mutes." + uuid.toString(), null);
-        saveData();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("DELETE FROM punish_mutes WHERE uuid = ?")) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public boolean isMuted(UUID uuid) {
-        if (!dataConfig.contains("Mutes." + uuid.toString())) return false;
-        long expiry = dataConfig.getLong("Mutes." + uuid.toString());
-        if (System.currentTimeMillis() > expiry) {
-            removeMute(uuid);
-            return false;
-        }
-        return true;
+        long expiry = getMuteExpiry(uuid);
+        return expiry > System.currentTimeMillis();
     }
 
-    // NEU FÜR DAS GUI: Gibt alle aktiven Mutes als Liste zurück
-    public List<UUID> getActiveMutes() {
-        List<UUID> activeMutes = new ArrayList<>();
-        if (dataConfig.contains("Mutes")) {
-            for (String key : dataConfig.getConfigurationSection("Mutes").getKeys(false)) {
-                try {
-                    UUID uuid = UUID.fromString(key);
-                    if (isMuted(uuid)) {
-                        activeMutes.add(uuid);
-                    }
-                } catch (IllegalArgumentException ignored) {}
-            }
-        }
-        return activeMutes;
-    }
-
-    // NEU FÜR DAS GUI: Holt die Endzeit eines Mutes
     public long getMuteExpiry(UUID uuid) {
-        return dataConfig.getLong("Mutes." + uuid.toString(), 0);
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT expiry FROM punish_mutes WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getLong("expiry");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
+    }
+
+    public List<UUID> getActiveMutes() {
+        List<UUID> mutes = new ArrayList<>();
+        long now = System.currentTimeMillis();
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT uuid FROM punish_mutes WHERE expiry > ?")) {
+            ps.setLong(1, now);
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) mutes.add(UUID.fromString(rs.getString("uuid")));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return mutes;
+    }
+
+    public List<UUID> getAllMutes() {
+        List<UUID> mutes = new ArrayList<>();
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT uuid FROM punish_mutes")) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) mutes.add(UUID.fromString(rs.getString("uuid")));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return mutes;
     }
 
     // --- WARN SYSTEM ---
     public int getWarnCount(UUID uuid) {
-        return dataConfig.getInt("Warns." + uuid.toString(), 0);
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT warn_count FROM punish_warns WHERE uuid = ?")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("warn_count");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
     }
 
     public void addWarn(UUID uuid) {
-        dataConfig.set("Warns." + uuid.toString(), getWarnCount(uuid) + 1);
-        saveData();
+        int newCount = getWarnCount(uuid) + 1;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("REPLACE INTO punish_warns (uuid, warn_count) VALUES (?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setInt(2, newCount);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public void resetWarns(UUID uuid) {
-        dataConfig.set("Warns." + uuid.toString(), 0);
-        saveData();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("DELETE FROM punish_warns WHERE uuid = ?")) {
+                ps.setString(1, uuid.toString());
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     // --- VERGEHEN & HISTORY ---
     public int getOffenseCount(UUID uuid, String reason) {
-        return dataConfig.getInt("Offenses." + uuid.toString() + "." + reason, 0);
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT offense_count FROM punish_offenses WHERE uuid = ? AND reason = ?")) {
+            ps.setString(1, uuid.toString());
+            ps.setString(2, reason);
+            ResultSet rs = ps.executeQuery();
+            if (rs.next()) return rs.getInt("offense_count");
+        } catch (SQLException e) { e.printStackTrace(); }
+        return 0;
     }
 
     public void addOffense(UUID uuid, String reason) {
-        dataConfig.set("Offenses." + uuid.toString() + "." + reason, getOffenseCount(uuid, reason) + 1);
-        saveData();
+        int newCount = getOffenseCount(uuid, reason) + 1;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("REPLACE INTO punish_offenses (uuid, reason, offense_count) VALUES (?, ?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, reason);
+                ps.setInt(3, newCount);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public void addHistory(UUID uuid, String logEntry) {
-        List<String> history = dataConfig.getStringList("History." + uuid.toString());
         String date = new SimpleDateFormat("yyyy-MM-dd HH:mm").format(new Date());
-        history.add("§8[" + date + "] §r" + logEntry);
-        dataConfig.set("History." + uuid.toString(), history);
-        saveData();
+        String finalEntry = "§8[" + date + "] §r" + logEntry;
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("INSERT INTO punish_history (uuid, entry) VALUES (?, ?)")) {
+                ps.setString(1, uuid.toString());
+                ps.setString(2, finalEntry);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 
     public List<String> getHistory(UUID uuid) {
-        return dataConfig.getStringList("History." + uuid.toString());
+        List<String> history = new ArrayList<>();
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT entry FROM punish_history WHERE uuid = ? ORDER BY id ASC")) {
+            ps.setString(1, uuid.toString());
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) history.add(rs.getString("entry"));
+        } catch (SQLException e) { e.printStackTrace(); }
+        return history;
+    }
+
+    // --- REPORT SYSTEM ---
+    public static class ReportEntry {
+        public String id, reporter, target, reason;
+        public long time;
+    }
+
+    public void addReport(UUID reporter, UUID target, String reason) {
+        String id = UUID.randomUUID().toString().substring(0, 8);
+        long time = System.currentTimeMillis();
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("INSERT INTO punish_reports (id, reporter, target, reason, time) VALUES (?, ?, ?, ?, ?)")) {
+                ps.setString(1, id);
+                ps.setString(2, reporter.toString());
+                ps.setString(3, target.toString());
+                ps.setString(4, reason);
+                ps.setLong(5, time);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
+    }
+
+    public List<ReportEntry> getReports() {
+        List<ReportEntry> reports = new ArrayList<>();
+        try (PreparedStatement ps = db.getConnection().prepareStatement("SELECT * FROM punish_reports ORDER BY time DESC")) {
+            ResultSet rs = ps.executeQuery();
+            while (rs.next()) {
+                ReportEntry re = new ReportEntry();
+                re.id = rs.getString("id");
+                re.reporter = rs.getString("reporter");
+                re.target = rs.getString("target");
+                re.reason = rs.getString("reason");
+                re.time = rs.getLong("time");
+                reports.add(re);
+            }
+        } catch (SQLException e) { e.printStackTrace(); }
+        return reports;
+    }
+
+    public void deleteReport(String id) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try (PreparedStatement ps = db.getConnection().prepareStatement("DELETE FROM punish_reports WHERE id = ?")) {
+                ps.setString(1, id);
+                ps.executeUpdate();
+            } catch (SQLException e) { e.printStackTrace(); }
+        });
     }
 }

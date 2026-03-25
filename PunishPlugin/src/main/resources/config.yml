@@ -1,14 +1,41 @@
-# BetterPunish Configuration
-prefix: "&8[&6⚖ BetterPunish&8] &7"
+# BetterPunish Pro - Configuration
+# High-Performance Moderation System
+prefix: "&8[&bBetterPunish&8] &7"
 default-language: "en"
+
+# --- WEB REST API ---
+# The web dashboard uses this API to fetch live data.
+api:
+  enabled: true
+  port: 8080
+  key: "admin-secret-key" # CHANGE THIS IMMEDIATELY FOR SECURITY!
+
+# --- STORAGE SYSTEM ---
+storage:
+  type: "sqlite"
+  mysql:
+    host: "localhost"
+    port: 3306
+    database: "betterpunish"
+    username: "root"
+    password: ""
+
+# --- DISCORD INTEGRATION ---
+# Send live notifications to your Discord staff channels.
+discord:
+  webhook-url: "YOUR_DISCORD_WEBHOOK_HERE"
 
 # --- CHAT FILTER SYSTEM ---
 chat-filter:
   enabled: true
   auto-warn: true
+  anti-spam: true
+  caps-detection: true
+  flood-cooldown: 1500
   banned-words:
     - "badword1"
     - "anotherserver.com"
+    - "regex: \\b(v|b)adw[o0]rd\\b"
   allowed-words:
     - "discord.gg/ourserver"
 
@@ -187,6 +214,15 @@ messages:
   filter-caught:
     en: "&cYour message was blocked because it contains forbidden words!"
     de: "&cDeine Nachricht wurde blockiert, da sie verbotene Wörter enthält!"
+  filter-spam:
+    en: "&cPlease do not repeat your messages!"
+    de: "&cBitte wiederhole deine Nachrichten nicht!"
+  filter-flood:
+    en: "&cYou are typing too fast! Please slow down."
+    de: "&cDu schreibst zu schnell! Bitte warte kurz."
+  filter-caps:
+    en: "&cPlease do not use so many capital letters!"
+    de: "&cBitte benutze nicht so viele Großbuchstaben!"
   reload-success:
     en: "&aConfiguration and data successfully reloaded!"
     de: "&aKonfiguration und Daten erfolgreich neu geladen!"
@@ -205,3 +241,15 @@ messages:
   staff-notify-filter:
     en: "&8[&cStaff&8] &e%player% &7tried to say a blocked word: &c%word%"
     de: "&8[&cTeam&8] &e%player% &7versuchte ein blockiertes Wort zu nutzen: &c%word%"
+  usage-report:
+    en: "&cUsage: /report <Player> <Reason>"
+    de: "&cVerwendung: /report <Spieler> <Grund>"
+  report-self:
+    en: "&cYou cannot report yourself!"
+    de: "&cDu kannst dich nicht selbst melden!"
+  report-success:
+    en: "&aThank you! Your report against %player% has been submitted."
+    de: "&aDanke! Dein Report gegen %player% wurde gesendet."
+  staff-notify-report:
+    en: "&8[&cStaff&8] &a%moderator% &7reported &e%player% &7for: &c%reason%"
+    de: "&8[&cTeam&8] &a%moderator% &7hat &e%player% &7gemeldet: &c%reason%"
